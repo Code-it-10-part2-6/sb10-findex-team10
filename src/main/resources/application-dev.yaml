@@ -13,4 +13,9 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        format_sql: trugite
+        format_sql: true
+
+open-api:
+  fsc:
+    base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
+    service-key: ${OPEN_API_KEY:}
