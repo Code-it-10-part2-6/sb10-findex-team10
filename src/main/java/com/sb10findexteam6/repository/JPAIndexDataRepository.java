@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 
-public interface IndexDataRepository extends JpaRepository<IndexData, Long> {
+public interface JPAIndexDataRepository extends JpaRepository<IndexData, Long> {
     boolean existsByIndexInfoIdAndBaseDate(Long indexInfoId, LocalDate baseDate);
 }
