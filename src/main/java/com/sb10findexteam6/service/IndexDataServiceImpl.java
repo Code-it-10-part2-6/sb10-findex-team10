@@ -5,7 +5,9 @@ import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
 import com.sb10findexteam6.dto.indexdata.IndexDataUpdateRequest;
 import com.sb10findexteam6.entity.IndexData;
-import com.sb10findexteam6.repository.JPAIndexDataRepository;
+import com.sb10findexteam6.entity.IndexInfo;
+import com.sb10findexteam6.repository.IndexDataRepository;
+import com.sb10findexteam6.repository.IndexInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,17 +17,17 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class IndexDataServiceImpl implements IndexDataService {
-    private final JPAIndexDataRepository jpaIndexDataRepository;
-    private final JPAIndexInfoRepository jpaIndexInfoRepository;
+    private final IndexDataRepository indexDataRepository;
+    private final IndexInfoRepository indexInfoRepository;
 
   @Override
   public IndexDataDto create(IndexDataCreateRequest request) {
     IndexInfo indexInfo =
-        jpaIndexInfoRepository.findById(request.indexInfoId())
+        indexInfoRepository.findById(request.indexInfoId())
             .orElseThrow(() -> new IllegalArgumentException("해당 지수 정보가 없습니다."));
 
     boolean exists =
-        jpaIndexDataRepository.existsByIndexInfoIdAndBaseDate(
+        indexDataRepository.existsByIndexInfoIdAndBaseDate(
             request.indexInfoId(), request.baseDate());
     if (exists) {
       throw new IllegalArgumentException("이미 해당 지수와 날짜로 등록된 지수 데이터가 존재합니다.");
@@ -46,13 +48,13 @@ public class IndexDataServiceImpl implements IndexDataService {
             request.tradingPrice(),
             request.marketTotalAmount());
 
-    IndexData saved = jpaIndexDataRepository.save(indexData);
+    IndexData saved = indexDataRepository.save(indexData);
     return toDto(saved);
     }
 
     @Override
     public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
-        IndexData indexData = jpaIndexDataRepository.findById(id)
+        IndexData indexData = indexDataRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터가 존재하지 않습니다. id=" + id));
 
         indexData.update(
@@ -72,16 +74,16 @@ public class IndexDataServiceImpl implements IndexDataService {
 
     @Override
     public void delete(Long id) {
-        IndexData indexData = jpaIndexDataRepository.findById(id)
+        IndexData indexData = indexDataRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터가 존재하지 않습니다. id=" + id));
 
-        jpaIndexDataRepository.delete(indexData);
+        indexDataRepository.delete(indexData);
     }
 
     @Transactional(readOnly = true)
     @Override
     public IndexDataDto getById(Long id) {
-        IndexData indexData = jpaIndexDataRepository.findById(id)
+        IndexData indexData = indexDataRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 지수 데이터가 존재하지 않습니다. id=" + id));
 
         return toDto(indexData);
