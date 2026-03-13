@@ -1,8 +1,10 @@
 package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.common.enums.SourceType;
+import com.sb10findexteam6.dto.PagingResponse;
 import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
+import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
 import com.sb10findexteam6.dto.indexdata.IndexDataUpdateRequest;
 import com.sb10findexteam6.entity.IndexData;
 import com.sb10findexteam6.entity.IndexInfo;
@@ -11,6 +13,8 @@ import com.sb10findexteam6.repository.IndexInfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -88,20 +92,21 @@ public class IndexDataServiceImpl implements IndexDataService {
 
         return toDto(indexData);
     }
-    /*
+
     @Override
-    public CursorPageResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
-        // 커스텀 레포 연결 전 임시 구현
-        return new CursorPageResponse<>(
+    @Transactional(readOnly = true)
+    public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
+        // 목록 조회 구현 전 임시 반환
+        int size = condition.getSize() != null ? condition.getSize() : 10;
+        return new PagingResponse<>(
                 List.of(),
                 null,
                 null,
-                condition.size() != null ? condition.size() : 10,
+                size,
                 0L,
-                false
-        );
+                false);
     }
-    */
+
 
     private IndexDataDto toDto(IndexData indexData) {
         return new IndexDataDto(

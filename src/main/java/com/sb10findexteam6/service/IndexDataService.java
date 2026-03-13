@@ -1,5 +1,6 @@
 package com.sb10findexteam6.service;
 
+import com.sb10findexteam6.dto.PagingResponse;
 import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
 import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
@@ -14,5 +15,5 @@ public interface IndexDataService {
 
     IndexDataDto getById(Long id);
     // 목록 조회는 나중에 구현
-    // CursorPageResponse<IndexDataDto> getAll(IndexDataSearchCondition condition);
+    PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition);
 }
