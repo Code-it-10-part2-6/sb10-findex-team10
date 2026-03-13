@@ -34,6 +34,7 @@ public class IndexData extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SourceType sourceType;
+
     // 현재가, 시장가
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal marketPrice;
@@ -46,14 +47,13 @@ public class IndexData extends BaseEntity {
     // 저가
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal lowPrice;
-
     // 전일대비값
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal versus;
     // 등락률 (오늘-어제) / 어제값 * 100
     @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal fluctuationRate;
-    //거래 총 수량
+    //거래량
     @Column(nullable = false)
     private Long tradingQuantity;
     // 거래 대금
@@ -113,5 +113,3 @@ public class IndexData extends BaseEntity {
         this.marketTotalAmount = marketTotalAmount;
     }
 }
-
-

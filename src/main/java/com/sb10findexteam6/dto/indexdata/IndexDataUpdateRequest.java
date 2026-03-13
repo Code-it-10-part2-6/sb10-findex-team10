@@ -1,13 +1,8 @@
-package com.sb10findexteam6.dto;
+package com.sb10findexteam6.dto.indexdata;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
-public record IndexDataDto(
-        Long id,
-        Long indexInfoId,
-        LocalDate baseDate,
-        String sourceType,
+public record IndexDataUpdateRequest(
         BigDecimal marketPrice,
         BigDecimal closingPrice,
         BigDecimal highPrice,
