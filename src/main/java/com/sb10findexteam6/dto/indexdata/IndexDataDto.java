@@ -1,5 +1,5 @@
 package com.sb10findexteam6.dto.indexdata;
-
+// 지수 데이터 응답에 사용하는 DTO.
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

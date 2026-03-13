@@ -1,5 +1,5 @@
 package com.sb10findexteam6.dto.indexdata;
-
+// 지수 데이터 목록 조회에서 사용할 수 있는 SortField 값 정의 해놓은 enum.
 import java.util.Arrays;
 
 public enum IndexDataSortField {
@@ -13,6 +13,7 @@ public enum IndexDataSortField {
     TRADING_QUANTITY("tradingQuantity"),
     TRADING_PRICE("tradingPrice"),
     MARKET_TOTAL_AMOUNT("marketTotalAmount");
+
 
     private final String value;
 
