@@ -1,7 +1,7 @@
 ---
 name: TO DO 템플릿
 about: TO DO 작성을 위한 템플릿
-title: "[feat]"
+title: "[feat] Title (2H)"
 labels: feat
 assignees: ''
 
@@ -15,6 +15,7 @@ assignees: ''
 
 ## 📖 작업 설명
 어떤 작업인지 설명합니다.
+이슈 제목에 작업 예상 시간을 ("시간"H) 형태로 추가해주세요
 
 예:
 - 지수 데이터 조회 API 구현
