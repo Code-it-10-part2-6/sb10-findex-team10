@@ -1,4 +1,4 @@
-package com.sb10findexteam6.common.paging.dto;
+package com.sb10findexteam6.dto;
 
 import java.util.List;
 

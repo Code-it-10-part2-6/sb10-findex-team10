@@ -1,4 +1,4 @@
-package com.sb10findexteam6.indexinfo.entity;
+package com.sb10findexteam6.entity;
 
 import com.sb10findexteam6.common.entity.BaseEntity;
 import com.sb10findexteam6.common.enums.SourceType;

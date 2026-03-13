@@ -1,6 +1,6 @@
-package com.sb10findexteam6.common.paging.mapper;
+package com.sb10findexteam6.mapper;
 
-import com.sb10findexteam6.common.paging.dto.PagingResponse;
+import com.sb10findexteam6.dto.PagingResponse;
 import java.util.List;
 import java.util.function.Function;
 
