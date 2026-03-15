@@ -1,3 +1,4 @@
+/*
 package com.sb10findexteam6.repository.specification;
 
 import com.sb10findexteam6.entity.IndexInfo;
@@ -55,3 +56,4 @@ public class SyncJobSpecification {
                 to == null ? null : cb.lessThanOrEqualTo(root.get("jobTime"), to);
     }
 }
+*/
