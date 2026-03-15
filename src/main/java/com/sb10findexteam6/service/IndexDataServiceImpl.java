@@ -26,10 +26,12 @@ public class IndexDataServiceImpl implements IndexDataService {
 
   @Override
   public IndexDataDto create(IndexDataCreateRequest request) {
+      // 지수 정보
     IndexInfo indexInfo =
         indexInfoRepository.findById(request.indexInfoId())
             .orElseThrow(() -> new IllegalArgumentException("해당 지수 정보가 없습니다."));
 
+    // 존재 여부 (Id, Data) 값 쌍으로 확인
     boolean exists =
         indexDataRepository.existsByIndexInfoIdAndBaseDate(
             request.indexInfoId(), request.baseDate());
