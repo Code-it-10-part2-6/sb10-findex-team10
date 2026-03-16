@@ -16,4 +16,6 @@ public interface IndexDataService {
   IndexDataDto getById(Long id);
 
   CursorPageResponse<IndexDataDto> getAll(IndexDataSearchCondition condition);
+
+  byte[] export(IndexDataSearchCondition condition);
 }

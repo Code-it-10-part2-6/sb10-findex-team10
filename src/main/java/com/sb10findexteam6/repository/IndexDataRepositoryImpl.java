@@ -22,6 +22,7 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
   @PersistenceContext
   private EntityManager em;
 
+  // 목록 조건 조회
   @Override
   public List<IndexData> search(IndexDataSearchCondition condition) {
     StringBuilder jpql = new StringBuilder("select d from IndexData d where 1=1");
@@ -75,6 +76,31 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
 
     int size = condition.getSize() != null ? condition.getSize() : 10;
     query.setMaxResults(size + 1);
+
+    return query.getResultList();
+  }
+
+  // CSV Export
+  @Override
+  public List<IndexData> searchForExport(IndexDataSearchCondition condition) {
+    StringBuilder jpql = new StringBuilder("select d from IndexData d where 1=1");
+    Map<String, Object> params = new HashMap<>();
+
+    appendWhereClause(jpql, params, condition);
+
+    IndexDataSortField sortField = resolveSortField(condition.getSortField());
+    String sortDirection = resolveSortDirection(condition.getSortDirection());
+    String sortFieldPath = "d. " + sortField.getEntityField();
+
+    jpql.append(" order by ")
+            .append(sortFieldPath)
+            .append(" ")
+            .append(sortDirection)
+            .append(", d.id ")
+            .append(sortDirection);
+
+    TypedQuery<IndexData> query = em.createQuery(jpql.toString(), IndexData.class);
+    params.forEach(query::setParameter);
 
     return query.getResultList();
   }
