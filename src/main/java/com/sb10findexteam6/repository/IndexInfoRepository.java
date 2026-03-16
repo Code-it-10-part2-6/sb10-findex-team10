@@ -61,6 +61,7 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
 
     // 특정 출처(sourceType)를 가 지수 목록 조회
     // 스케줄러가 OpenAPI 연동 지수 찾을 때 사용
-    List<IndexInfo> findAllBySourceType(SourceType sourceType);
-
+  @Query("SELECT a.indexInfo FROM AutoSyncConfig a " +
+      "WHERE a.enabled = true AND a.indexInfo.sourceType = :sourceType")
+  List<IndexInfo> findEnabledAutoSyncIndexes(@Param("sourceType") SourceType sourceType);
 }
