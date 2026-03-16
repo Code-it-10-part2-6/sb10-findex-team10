@@ -4,7 +4,6 @@ import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigDto;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigSearchCondition;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigUpdateRequest;
-import java.util.List;
 
 public interface AutoSyncConfigService {
 
