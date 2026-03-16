@@ -11,10 +11,13 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "auto_sync_config")
 @Getter
+@Setter
+@AllArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
 public class AutoSyncConfig extends BaseEntity {
