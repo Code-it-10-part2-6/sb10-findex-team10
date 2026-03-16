@@ -1,6 +1,6 @@
 package com.sb10findexteam6.service;
 
-import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
@@ -13,7 +13,8 @@ public interface IndexInfoService {
   IndexInfoDto update(Long id, IndexInfoUpdateRequest request);
   IndexInfoDto findById(Long id);
   void delete(Long id);
-  PagingResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) ;
+  CursorPageResponseIndexInfoDto findIndexInfoList(IndexInfoSearchRequest request) ;
   List<IndexInfoSummaryDto> findSummaryList();
+
 
 }

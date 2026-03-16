@@ -2,15 +2,18 @@ package com.sb10findexteam6.service;
 
 
 import com.sb10findexteam6.common.enums.SourceType;
-import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.CursorPageResponse;
+import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSummaryDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoUpdateRequest;
+import com.sb10findexteam6.entity.AutoSyncConfig;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.IndexInfoMapper;
 import com.sb10findexteam6.mapper.PagingMapper;
+import com.sb10findexteam6.repository.AutoSyncConfigRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,10 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IndexInfoServiceImpl implements IndexInfoService{
   private final IndexInfoRepository indexInfoRepository;
- // private final IndexDataRepository indexDataRepository;
- // private final AutoSyncConfigRepository autoSyncConfigRepository;
+  private final AutoSyncConfigRepository autoSyncConfigRepository;
   private final IndexInfoMapper indexInfoMapper;
   private final PagingMapper pagingMapper;
+
 
   @Override
   @Transactional
@@ -53,8 +56,8 @@ public class IndexInfoServiceImpl implements IndexInfoService{
     );
     indexInfoRepository.save(indexInfo);
 
-   // AutoSyncConfig autoSyncConfig = new AutoSyncConfig(); // AuthoSyncConfig 확인후 파라미터 수정예정
-  //  autoSyncConfigRepository.save(autoSyncConfig);
+    AutoSyncConfig autoSyncConfig = new AutoSyncConfig(indexInfo);
+    autoSyncConfigRepository.save(autoSyncConfig);
 
     return indexInfoMapper.toDto(indexInfo);
   }
@@ -97,7 +100,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
 
   @Override
   @Transactional(readOnly = true)
-  public PagingResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) {
+  public CursorPageResponseIndexInfoDto findIndexInfoList(IndexInfoSearchRequest request) {
     // 1. 정렬 방향 판별
     boolean isAsc = "asc".equalsIgnoreCase(request.sortDirection());
     String field = request.sortField() == null ? "indexClassification" : request.sortField();
@@ -135,11 +138,20 @@ public class IndexInfoServiceImpl implements IndexInfoService{
     );
 
     // 7. 페이징 응답 생성
-    return pagingMapper.toResponse(
+    CursorPageResponse<IndexInfoDto> page = pagingMapper.toResponse(
         results.stream().map(indexInfoMapper::toDto).toList(),
         request.size(),
         totalElements,
         IndexInfoDto::id
+    );
+
+    return new CursorPageResponseIndexInfoDto(
+        page.content(),
+        page.nextCursor(),
+        page.nextIdAfter(),
+        page.size(),
+        page.totalElements(),
+        page.hasNext()
     );
   }
 

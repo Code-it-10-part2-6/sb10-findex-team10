@@ -1,7 +1,7 @@
 package com.sb10findexteam6.controller;
 
 
-import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
@@ -62,7 +62,7 @@ public class IndexInfoController {
   }
 
   @GetMapping
-  public ResponseEntity<PagingResponse<IndexInfoDto>> findIndexInfoList(
+  public ResponseEntity<CursorPageResponseIndexInfoDto> findIndexInfoList(
       @RequestParam(required = false) String indexClassification,
       @RequestParam(required = false) String indexName,
       @RequestParam(required = false) Boolean favorite,
