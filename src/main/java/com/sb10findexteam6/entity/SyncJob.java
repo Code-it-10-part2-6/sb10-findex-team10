@@ -1,6 +1,9 @@
+
 package com.sb10findexteam6.entity;
 
 import com.sb10findexteam6.common.entity.BaseEntity;
+import com.sb10findexteam6.common.enums.JobType;
+import com.sb10findexteam6.common.enums.Result;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

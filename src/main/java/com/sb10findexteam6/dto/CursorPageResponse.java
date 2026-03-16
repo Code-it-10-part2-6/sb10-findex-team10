@@ -2,9 +2,9 @@ package com.sb10findexteam6.dto;
 
 import java.util.List;
 
-public record PagingResponse<T>(
+public record CursorPageResponse<T>(
     List<T> content,
-    Long nextCursor,
+    String nextCursor,
     Long nextIdAfter,
     int size,
     long totalElements,
@@ -12,3 +12,4 @@ public record PagingResponse<T>(
 ) {
 
 }
+
