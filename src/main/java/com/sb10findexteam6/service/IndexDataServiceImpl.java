@@ -18,13 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class IndexDataServiceImpl implements IndexDataService {
-    private final IndexDataRepository indexDataRepository;
-    private final IndexInfoRepository indexInfoRepository;
+  private final IndexDataRepository indexDataRepository;
+  private final IndexInfoRepository indexInfoRepository;
 
   @Override
   public IndexDataDto create(IndexDataCreateRequest request) {
@@ -32,10 +31,11 @@ public class IndexDataServiceImpl implements IndexDataService {
     IndexInfo indexInfo =
         indexInfoRepository
             .findById(request.indexInfoId())
-            .orElseThrow(() -> new BusinessException(
-                    ErrorCode.INVALID_REQUEST,
-                    "해당 지수 정보가 없습니다. indexInfoId= " + request.indexInfoId()
-            ));
+            .orElseThrow(
+                () ->
+                    new BusinessException(
+                        ErrorCode.INVALID_REQUEST,
+                        "해당 지수 정보가 없습니다. indexInfoId= " + request.indexInfoId()));
 
     // 존재 여부 (Id, Data) 값 쌍으로 확인
     boolean exists =
@@ -43,9 +43,11 @@ public class IndexDataServiceImpl implements IndexDataService {
             request.indexInfoId(), request.baseDate());
     if (exists) {
       throw new BusinessException(
-              ErrorCode.INVALID_REQUEST,
-              "이미 해당 지수 정보와 날짜로 등록된 지수 데이터가 존재합니다. indexInfoId= " + request.indexInfoId() + ", baseDate= " + request.baseDate()
-      );
+          ErrorCode.INVALID_REQUEST,
+          "이미 해당 지수 정보와 날짜로 등록된 지수 데이터가 존재합니다. indexInfoId= "
+              + request.indexInfoId()
+              + ", baseDate= "
+              + request.baseDate());
     }
 
     IndexData indexData =
@@ -65,85 +67,84 @@ public class IndexDataServiceImpl implements IndexDataService {
 
     IndexData saved = indexDataRepository.save(indexData);
     return toDto(saved);
-    }
+  }
 
-    @Override
-    public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
+  @Override
+  public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
     IndexData indexData =
         indexDataRepository
             .findById(id)
-            .orElseThrow(() -> new BusinessException(
-                    ErrorCode.INVALID_REQUEST,
-                    "해당 지수 데이터가 존재하지 않습니다. id= " + id
-            ));
+            .orElseThrow(
+                () ->
+                    new BusinessException(
+                        ErrorCode.INVALID_REQUEST, "해당 지수 데이터가 존재하지 않습니다. id= " + id));
 
-        indexData.update(
-                request.marketPrice(),
-                request.closingPrice(),
-                request.highPrice(),
-                request.lowPrice(),
-                request.versus(),
-                request.fluctuationRate(),
-                request.tradingQuantity(),
-                request.tradingPrice(),
-                request.marketTotalAmount()
-        );
+    indexData.update(
+        request.marketPrice(),
+        request.closingPrice(),
+        request.highPrice(),
+        request.lowPrice(),
+        request.versus(),
+        request.fluctuationRate(),
+        request.tradingQuantity(),
+        request.tradingPrice(),
+        request.marketTotalAmount());
 
-        return toDto(indexData);
-    }
+    return toDto(indexData);
+  }
 
-    @Override
-    public void delete(Long id) {
-        IndexData indexData = indexDataRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.INVALID_REQUEST,
-                        "해당 지수 데이터가 존재하지 않습니다. id= " + id
-                ));
+  @Override
+  public void delete(Long id) {
+    IndexData indexData =
+        indexDataRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new BusinessException(
+                        ErrorCode.INVALID_REQUEST, "해당 지수 데이터가 존재하지 않습니다. id= " + id));
 
-        indexDataRepository.delete(indexData);
-    }
+    indexDataRepository.delete(indexData);
+  }
 
-    @Transactional(readOnly = true)
-    @Override
-    public IndexDataDto getById(Long id) {
-        IndexData indexData = indexDataRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.INVALID_REQUEST,
-                        "해당 지수 데이터가 존재하지 않습니다. id= " + id
-                ));
-        return toDto(indexData);
-    }
+  @Transactional(readOnly = true)
+  @Override
+  public IndexDataDto getById(Long id) {
+    IndexData indexData =
+        indexDataRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new BusinessException(
+                        ErrorCode.INVALID_REQUEST, "해당 지수 데이터가 존재하지 않습니다. id= " + id));
+    return toDto(indexData);
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
-        // 목록 조회 구현 전 임시 반환
-        int size = condition.getSize() != null ? condition.getSize() : 10;
-        return new PagingResponse<>(
-                List.of(),
-                null,
-                null,
-                size,
-                0L,
-                false);
-    }
+  // 동적 조건 조회 부분
+  @Override
+  @Transactional(readOnly = true)
+  public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
+    List<IndexDataDto> content =
+        indexDataRepository.search(condition).stream().map(this::toDto).toList();
 
+    int size = condition.getSize() != null ? condition.getSize() : 10;
 
-    private IndexDataDto toDto(IndexData indexData) {
-        return new IndexDataDto(
-                indexData.getId(),
-                indexData.getIndexInfo().getId(),
-                indexData.getBaseDate(),
-                indexData.getSourceType().name(),
-                indexData.getMarketPrice(),
-                indexData.getClosingPrice(),
-                indexData.getHighPrice(),
-                indexData.getLowPrice(),
-                indexData.getVersus(),
-                indexData.getFluctuationRate(),
-                indexData.getTradingQuantity(),
-                indexData.getTradingPrice(),
-                indexData.getMarketTotalAmount()
-        );
-    }
+    return new PagingResponse<>(content, null, null, size, content.size(), false);
+  }
+
+  private IndexDataDto toDto(IndexData indexData) {
+    return new IndexDataDto(
+        indexData.getId(),
+        indexData.getIndexInfo().getId(),
+        indexData.getBaseDate(),
+        indexData.getSourceType().name(),
+        indexData.getMarketPrice(),
+        indexData.getClosingPrice(),
+        indexData.getHighPrice(),
+        indexData.getLowPrice(),
+        indexData.getVersus(),
+        indexData.getFluctuationRate(),
+        indexData.getTradingQuantity(),
+        indexData.getTradingPrice(),
+        indexData.getMarketTotalAmount());
+  }
 }
