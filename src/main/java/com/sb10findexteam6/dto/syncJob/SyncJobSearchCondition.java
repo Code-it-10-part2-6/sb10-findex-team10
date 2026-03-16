@@ -11,6 +11,11 @@ public record SyncJobSearchCondition(
         LocalDate targetDateFrom,
         LocalDate targetDateTo,
         String worker,
-        Result result
+        Result result,
+        Long idAfter,
+        String cursor,
+        String sortField,
+        String sortDirection,
+        Integer size
 ) {
 }
