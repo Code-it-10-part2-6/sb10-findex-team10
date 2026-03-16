@@ -37,4 +37,24 @@ public class IndexInfo extends BaseEntity {
   @Column(nullable = false)
   private boolean favorite;
 
+  public IndexInfo(String indexClassification, String indexName,
+      int employedItemsCount, LocalDate basePointInTime,
+      BigDecimal baseIndex, SourceType sourceType, boolean favorite) {
+    this.indexClassification = indexClassification;
+    this.indexName = indexName;
+    this.employedItemsCount = employedItemsCount;
+    this.basePointInTime = basePointInTime;
+    this.baseIndex = baseIndex;
+    this.sourceType = sourceType;
+    this.favorite = favorite;
+  }
+
+  public void update(Integer employedItemsCount, LocalDate basePointInTime,
+      BigDecimal baseIndex, boolean favorite) {
+    this.employedItemsCount = employedItemsCount;
+    this.basePointInTime = basePointInTime;
+    this.baseIndex = baseIndex;
+    this.favorite = favorite;
+  }
+
 }
