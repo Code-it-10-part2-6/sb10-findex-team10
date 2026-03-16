@@ -1,11 +1,11 @@
 package com.sb10findexteam6.service;
 
-import com.sb10findexteam6.dto.CursorPageIndexInfoResponse;
-import com.sb10findexteam6.dto.IndexInfoCreateRequest;
-import com.sb10findexteam6.dto.IndexInfoDto;
-import com.sb10findexteam6.dto.IndexInfoSearchRequest;
-import com.sb10findexteam6.dto.IndexInfoSummaryDto;
-import com.sb10findexteam6.dto.IndexInfoUpdateRequest;
+import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoSummaryDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoUpdateRequest;
 import java.util.List;
 
 public interface IndexInfoService {
@@ -13,7 +13,7 @@ public interface IndexInfoService {
   IndexInfoDto update(Long id, IndexInfoUpdateRequest request);
   IndexInfoDto findById(Long id);
   void delete(Long id);
-  CursorPageIndexInfoResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) ;
+  PagingResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) ;
   List<IndexInfoSummaryDto> findSummaryList();
 
 }

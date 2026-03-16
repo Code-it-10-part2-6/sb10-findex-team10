@@ -1,4 +1,4 @@
-package com.sb10findexteam6.dto;
+package com.sb10findexteam6.dto.indexinfo;
 
 public record IndexInfoSearchRequest (
     String indexClassification,  // 지수 분류명

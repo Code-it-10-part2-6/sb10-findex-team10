@@ -2,12 +2,12 @@ package com.sb10findexteam6.service;
 
 
 import com.sb10findexteam6.common.enums.SourceType;
-import com.sb10findexteam6.dto.CursorPageIndexInfoResponse;
-import com.sb10findexteam6.dto.IndexInfoCreateRequest;
-import com.sb10findexteam6.dto.IndexInfoDto;
-import com.sb10findexteam6.dto.IndexInfoSearchRequest;
-import com.sb10findexteam6.dto.IndexInfoSummaryDto;
-import com.sb10findexteam6.dto.IndexInfoUpdateRequest;
+import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoSummaryDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoUpdateRequest;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.IndexInfoMapper;
 import com.sb10findexteam6.mapper.PagingMapper;
@@ -97,7 +97,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
 
   @Override
   @Transactional(readOnly = true)
-  public CursorPageIndexInfoResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) {
+  public PagingResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) {
     // 1. 정렬 방향 판별
     boolean isAsc = "asc".equalsIgnoreCase(request.sortDirection());
     String field = request.sortField() == null ? "indexClassification" : request.sortField();

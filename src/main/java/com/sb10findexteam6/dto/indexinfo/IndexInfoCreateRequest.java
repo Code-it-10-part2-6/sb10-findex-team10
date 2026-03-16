@@ -1,9 +1,11 @@
-package com.sb10findexteam6.dto;
+package com.sb10findexteam6.dto.indexinfo;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record IndexInfoUpdateRequest(
+public record IndexInfoCreateRequest(
+    String indexClassification,
+    String indexName,
     int employedItemsCount,
     LocalDate basePointInTime,
     BigDecimal baseIndex,

@@ -1,15 +1,16 @@
 package com.sb10findexteam6.mapper;
 
-import com.sb10findexteam6.dto.CursorPageIndexInfoResponse;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
+
+import com.sb10findexteam6.dto.PagingResponse;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PagingMapper {
 
-  public <T> CursorPageIndexInfoResponse<T> toResponse(
+  public <T> PagingResponse<T> toResponse(
       List<T> results,
       int size,
       long totalElements,
@@ -26,7 +27,7 @@ public class PagingMapper {
           .encodeToString(("{\"id\":" + nextIdAfter + "}").getBytes());
     }
 
-    return new CursorPageIndexInfoResponse<>(
+    return new PagingResponse<>(
         content,
         nextCursor,
         nextIdAfter,
