@@ -1,0 +1,153 @@
+package com.sb10findexteam6.service;
+
+
+import com.sb10findexteam6.common.enums.SourceType;
+import com.sb10findexteam6.dto.CursorPageIndexInfoResponse;
+import com.sb10findexteam6.dto.IndexInfoCreateRequest;
+import com.sb10findexteam6.dto.IndexInfoDto;
+import com.sb10findexteam6.dto.IndexInfoSearchRequest;
+import com.sb10findexteam6.dto.IndexInfoSummaryDto;
+import com.sb10findexteam6.dto.IndexInfoUpdateRequest;
+import com.sb10findexteam6.entity.IndexInfo;
+import com.sb10findexteam6.mapper.IndexInfoMapper;
+import com.sb10findexteam6.mapper.PagingMapper;
+import com.sb10findexteam6.repository.IndexInfoRepository;
+import java.util.List;
+import java.util.NoSuchElementException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class IndexInfoServiceImpl implements IndexInfoService{
+  private final IndexInfoRepository indexInfoRepository;
+ // private final IndexDataRepository indexDataRepository;
+ // private final AutoSyncConfigRepository autoSyncConfigRepository;
+  private final IndexInfoMapper indexInfoMapper;
+  private final PagingMapper pagingMapper;
+
+  @Override
+  @Transactional
+  public IndexInfoDto create(IndexInfoCreateRequest request) {
+    if(indexInfoRepository.existsByIndexClassificationAndIndexName(
+        request.indexClassification(),
+        request.indexName()))
+    {
+      throw new IllegalArgumentException("이미 존재하는 지수 정보입니다.");
+    }
+
+    //Open API를 활용해 자동으로 등록할 수 있습니다. API키 들어오면 구현
+
+    IndexInfo indexInfo = new IndexInfo(
+        request.indexClassification(),
+        request.indexName(),
+        request.employedItemsCount(),
+        request.basePointInTime(),
+        request.baseIndex(),
+        SourceType.USER,
+        request.favorite()
+    );
+    indexInfoRepository.save(indexInfo);
+
+   // AutoSyncConfig autoSyncConfig = new AutoSyncConfig(); // AuthoSyncConfig 확인후 파라미터 수정예정
+  //  autoSyncConfigRepository.save(autoSyncConfig);
+
+    return indexInfoMapper.toDto(indexInfo);
+  }
+
+  @Override
+  @Transactional
+  public IndexInfoDto update(Long id, IndexInfoUpdateRequest request) {
+    IndexInfo indexInfo = indexInfoRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("해당 id의 지수 정보가 없습니다"));
+
+    indexInfo.update(
+        request.employedItemsCount(),
+        request.basePointInTime(),
+        request.baseIndex(),
+        request.favorite()
+    );
+
+    //{채용 종목 수}, {기준 시점}, {기준 지수}는 Open API를 활용해 자동으로 수정할 수 있습니다. API키 들어오면 구현
+
+    return indexInfoMapper.toDto(indexInfo);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public IndexInfoDto findById(Long id) {
+    IndexInfo indexInfo = indexInfoRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("해당 id의 지수 정보가 없습니다"));
+    return indexInfoMapper.toDto(indexInfo);
+  }
+
+  @Override
+  @Transactional
+  public void delete(Long id) {
+    IndexInfo indexInfo = indexInfoRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("해당 id의 지수 정보가 없습니다"));
+   // indexDataRepository.deleteByIndexInfo(indexInfo);
+    // indexData메서드 확인후 파라미터 수정 CascadeType.REMOVE , orphanRemoval = true 설정할건지 논의하기
+    indexInfoRepository.delete(indexInfo);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public CursorPageIndexInfoResponse<IndexInfoDto> findIndexInfoList(IndexInfoSearchRequest request) {
+    // 1. 정렬 방향 판별
+    boolean isAsc = "asc".equalsIgnoreCase(request.sortDirection());
+    String field = request.sortField() == null ? "indexClassification" : request.sortField();
+
+    // 2. 정렬 조건 생성
+    Sort sort = Sort.by(isAsc ? Sort.Direction.ASC : Sort.Direction.DESC, field)
+        .and(Sort.by(isAsc ? Sort.Direction.ASC : Sort.Direction.DESC, "id"));
+
+    // 3. size+1개 조회
+    Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
+
+    // 4. cursor -> idAfter 변환
+    Long resolvedIdAfter = pagingMapper.resolveIdAfter(request.cursor(), request.idAfter());
+
+    // 5. ASC/DESC에 따라 다른 쿼리 호출
+    List<IndexInfo> results = isAsc
+        ? indexInfoRepository.findByConditionsAsc(
+        request.indexClassification(),
+        request.indexName(),
+        request.favorite(),
+        resolvedIdAfter,
+        pageable)
+        : indexInfoRepository.findByConditionsDesc(
+            request.indexClassification(),
+            request.indexName(),
+            request.favorite(),
+            resolvedIdAfter,
+            pageable);
+
+    // 6. totalElements
+    long totalElements = indexInfoRepository.countByConditions(
+        request.indexClassification(),
+        request.indexName(),
+        request.favorite()
+    );
+
+    // 7. 페이징 응답 생성
+    return pagingMapper.toResponse(
+        results.stream().map(indexInfoMapper::toDto).toList(),
+        request.size(),
+        totalElements,
+        IndexInfoDto::id
+    );
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<IndexInfoSummaryDto> findSummaryList() {
+    return indexInfoRepository.findAll().stream()
+        .map(indexInfoMapper::toSummaryDto)
+        .toList();
+  }
+}

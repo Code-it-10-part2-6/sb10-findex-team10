@@ -1,7 +1,6 @@
 package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.common.enums.SourceType;
-import com.sb10findexteam6.dto.PagingResponse;
 import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
 import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
