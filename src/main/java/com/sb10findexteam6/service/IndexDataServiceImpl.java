@@ -1,6 +1,8 @@
 package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.common.enums.SourceType;
+import com.sb10findexteam6.common.exception.BusinessException;
+import com.sb10findexteam6.common.exception.ErrorCode;
 import com.sb10findexteam6.dto.PagingResponse;
 import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
@@ -26,17 +28,24 @@ public class IndexDataServiceImpl implements IndexDataService {
 
   @Override
   public IndexDataDto create(IndexDataCreateRequest request) {
-      // 지수 정보
+    // 지수 정보
     IndexInfo indexInfo =
-        indexInfoRepository.findById(request.indexInfoId())
-            .orElseThrow(() -> new IllegalArgumentException("해당 지수 정보가 없습니다."));
+        indexInfoRepository
+            .findById(request.indexInfoId())
+            .orElseThrow(() -> new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "해당 지수 정보가 없습니다. indexInfoId= " + request.indexInfoId()
+            ));
 
     // 존재 여부 (Id, Data) 값 쌍으로 확인
     boolean exists =
         indexDataRepository.existsByIndexInfoIdAndBaseDate(
             request.indexInfoId(), request.baseDate());
     if (exists) {
-      throw new IllegalArgumentException("이미 해당 지수와 날짜로 등록된 지수 데이터가 존재합니다.");
+      throw new BusinessException(
+              ErrorCode.INVALID_REQUEST,
+              "이미 해당 지수 정보와 날짜로 등록된 지수 데이터가 존재합니다. indexInfoId= " + request.indexInfoId() + ", baseDate= " + request.baseDate()
+      );
     }
 
     IndexData indexData =
@@ -60,8 +69,13 @@ public class IndexDataServiceImpl implements IndexDataService {
 
     @Override
     public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
-        IndexData indexData = indexDataRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("수정할 지수 데이터가 존재하지 않습니다. id=" + id));
+    IndexData indexData =
+        indexDataRepository
+            .findById(id)
+            .orElseThrow(() -> new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "해당 지수 데이터가 존재하지 않습니다. id= " + id
+            ));
 
         indexData.update(
                 request.marketPrice(),
@@ -81,7 +95,10 @@ public class IndexDataServiceImpl implements IndexDataService {
     @Override
     public void delete(Long id) {
         IndexData indexData = indexDataRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("삭제할 지수 데이터가 존재하지 않습니다. id=" + id));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.INVALID_REQUEST,
+                        "해당 지수 데이터가 존재하지 않습니다. id= " + id
+                ));
 
         indexDataRepository.delete(indexData);
     }
@@ -90,8 +107,10 @@ public class IndexDataServiceImpl implements IndexDataService {
     @Override
     public IndexDataDto getById(Long id) {
         IndexData indexData = indexDataRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 지수 데이터가 존재하지 않습니다. id=" + id));
-
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.INVALID_REQUEST,
+                        "해당 지수 데이터가 존재하지 않습니다. id= " + id
+                ));
         return toDto(indexData);
     }
 
