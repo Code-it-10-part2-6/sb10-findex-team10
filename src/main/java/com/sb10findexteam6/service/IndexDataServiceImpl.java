@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -138,6 +139,35 @@ public class IndexDataServiceImpl implements IndexDataService {
                 totalElements,
                 IndexDataDto::id
         );
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] export(IndexDataSearchCondition condition) {
+        List<IndexDataDto> results = indexDataRepository.searchForExport(condition).stream()
+                .map(this::toDto)
+                .toList();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("id,indexInfoId,baseDate,sourceType,marketPrice,closingPrice,highPrice,lowPrice,versus,fluctuationRate,tradingQuantity,tradingPrice,marketTotalAmount\n");
+
+        for (IndexDataDto dto : results) {
+            sb.append(dto.id()).append(",")
+                    .append(dto.indexInfoId()).append(",")
+                    .append(dto.baseDate()).append(",")
+                    .append(dto.sourceType()).append(",")
+                    .append(dto.marketPrice()).append(",")
+                    .append(dto.closingPrice()).append(",")
+                    .append(dto.highPrice()).append(",")
+                    .append(dto.lowPrice()).append(",")
+                    .append(dto.versus()).append(",")
+                    .append(dto.fluctuationRate()).append(",")
+                    .append(dto.tradingQuantity()).append(",")
+                    .append(dto.tradingPrice()).append(",")
+                    .append(dto.marketTotalAmount())
+                    .append("\n");
+        }
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     private IndexDataDto toDto(IndexData indexData) {

@@ -7,7 +7,10 @@ import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
 import com.sb10findexteam6.dto.indexdata.IndexDataUpdateRequest;
 import com.sb10findexteam6.service.IndexDataService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -49,7 +52,8 @@ public class IndexDataController {
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false, defaultValue = "baseDate") String sortField,
       @RequestParam(required = false, defaultValue = "desc") String sortDirection,
-      @RequestParam(required = false, defaultValue = "10") Integer size) {
+      @RequestParam(required = false, defaultValue = "10") Integer size
+  ) {
     IndexDataSearchCondition condition = new IndexDataSearchCondition();
     condition.setIndexInfoId(indexInfoId);
     condition.setStartDate(startDate);
@@ -61,5 +65,28 @@ public class IndexDataController {
     condition.setSize(size);
 
     return indexDataService.getAll(condition);
+  }
+
+  @GetMapping(value = "/export", produces = "text/csv")
+  public ResponseEntity<byte[]> export(
+          @RequestParam(required = false) Long indexInfoId,
+          @RequestParam(required = false) LocalDate startDate,
+          @RequestParam(required = false) LocalDate endDate,
+          @RequestParam(required = false, defaultValue = "baseDate") String sortField,
+          @RequestParam(required = false, defaultValue = "desc") String sortDirection
+  ) {
+    IndexDataSearchCondition condition = new IndexDataSearchCondition();
+    condition.setIndexInfoId(indexInfoId);
+    condition.setStartDate(startDate);
+    condition.setEndDate(endDate);
+    condition.setSortField(sortField);
+    condition.setSortDirection(sortDirection);
+
+    byte[] csv = indexDataService.export(condition);
+
+    return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=index-data.csv")
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(csv);
   }
 }

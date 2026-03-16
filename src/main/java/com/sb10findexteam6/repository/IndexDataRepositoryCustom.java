@@ -9,4 +9,7 @@ public interface IndexDataRepositoryCustom {
   List<IndexData> search(IndexDataSearchCondition condition);
 
   long count(IndexDataSearchCondition condition);
+
+  //csv Export
+  List<IndexData> searchForExport(IndexDataSearchCondition condition);
 }
