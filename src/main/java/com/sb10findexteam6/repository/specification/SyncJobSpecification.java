@@ -1,8 +1,8 @@
 package com.sb10findexteam6.repository.specification;
 
+import com.sb10findexteam6.common.enums.JobType;
+import com.sb10findexteam6.common.enums.Result;
 import com.sb10findexteam6.entity.IndexInfo;
-import com.sb10findexteam6.entity.JobType;
-import com.sb10findexteam6.entity.Result;
 import com.sb10findexteam6.entity.SyncJob;
 import org.springframework.data.jpa.domain.Specification;
 
