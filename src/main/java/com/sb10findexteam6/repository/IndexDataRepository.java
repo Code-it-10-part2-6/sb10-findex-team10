@@ -1,6 +1,7 @@
 package com.sb10findexteam6.repository;
 
 import com.sb10findexteam6.entity.IndexData;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;

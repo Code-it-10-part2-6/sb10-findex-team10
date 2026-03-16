@@ -1,5 +1,6 @@
 package com.sb10findexteam6.repository;
 
+import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.entity.IndexInfo;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
+
   // 임시 추가.
   Optional<IndexInfo> findByIndexClassificationAndIndexName(
           String indexClassification,

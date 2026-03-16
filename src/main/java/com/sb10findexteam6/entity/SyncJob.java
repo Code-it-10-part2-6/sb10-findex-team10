@@ -9,6 +9,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import com.sb10findexteam6.common.enums.JobType;
+import com.sb10findexteam6.common.enums.Result;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
