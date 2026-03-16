@@ -12,14 +12,12 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "open-api.fsc")
 public class OpenApiProperties {
 
-    /**
-     * 공공데이터포털 금융위원회 지수시세정보 API Base URL
-     */
+    // 공공데이터포털 금융위원회 지수시세정보 API Base URL
     private String baseUrl;
 
-    /**
-     * 발급받은 서비스 인증키 (Decoding 키)
-     */
+    // 발급받은 서비스 인증키 (Decoding 키)
     private String serviceKey;
+
+    private int defaultSyncDays = 30;
 
 }
