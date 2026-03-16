@@ -12,20 +12,21 @@ public class PagingMapper {
    */
   public static <T>PagingResponse<T> toDto(
       List<T> content,    // DB 에서 조회한 데이터 리스트
-      Function<T, Long> cursor, // indexInfo, indexData 양쪽에서 호출할수 있어서 Function타입
-      Function<T, Long> id,
+      Function<T, String> cursorExtractor, // indexInfo, indexData 양쪽에서 호출할수 있어서 Function타입
+      Function<T, Long> idExtractor,
       int size, // 한번에 몇개의 데이터를 로드하는 사이즈
       long totalElements
   ) {
     boolean hasNext = content.size() > size;
     List<T> result = hasNext ? content.subList(0, size) : content;
 
-    Long nextCursor = result.isEmpty()
+    String nextCursor = result.isEmpty()
         ? null
-        : id.apply(result.get(result.size() - 1));
+        : cursorExtractor.apply(result.get(result.size() - 1));
+
     Long nextIdAfter = result.isEmpty()
             ? null
-            : id.apply(result.get(result.size() - 1));
+            : idExtractor.apply(result.get(result.size() - 1));
 
     return new PagingResponse<>(
             result,
