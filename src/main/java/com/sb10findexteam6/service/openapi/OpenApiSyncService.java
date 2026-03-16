@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -30,56 +28,53 @@ public class OpenApiSyncService {
     public Optional<IndexData> fetchOneDayIndexData(IndexInfo indexInfo, LocalDate targetDate) {
         String targetDateStr = targetDate.format(API_DATE_FORMAT);
         log.info("[OpenAPI 데이터 수집] 지수명: {}, 타겟 일자: {}", indexInfo.getIndexName(), targetDateStr);
-        FscIndexResponseDto responseDto =
-            openApiFetchService.fetchStockMarketIndex(targetDateStr, 100, 1);
-        return extractTargetItem(responseDto, indexInfo.getIndexName())
+
+        return fetchTargetItemWithPaging(targetDateStr, indexInfo.getIndexName())
             .map(item -> openApiDataMapper.mapToEntity(item, indexInfo));
     }
 
     /**
-     * IndexInfo에 대해 startDate부터 endDate까지의 데이터를 수집
+     * API 응답의 전체 페이지를 순회하며 우리가 원하는 지수명만 정확히 필터링해서 추출
      */
-    public List<IndexData> fetchIndexDataList(IndexInfo indexInfo, LocalDate startDate, LocalDate endDate) {
-        List<IndexData> collectedData = new ArrayList<>();
-        LocalDate currentDate = startDate;
+    private Optional<FscIndexResponseDto.Item> fetchTargetItemWithPaging(String targetDateStr, String targetIndexName) {
+        int pageNo = 1;
+        int numOfRows = 100; // 한 페이지당 요청 건수
 
-        // 시작일부터 종료일까지 하루씩 증가하며 반복 호출
-        while (!currentDate.isAfter(endDate)) {
-            String targetDateStr = currentDate.format(API_DATE_FORMAT);
-            log.info("[OpenAPI 데이터 수집] 지수명: {}, 타겟 일자: {}", indexInfo.getIndexName(), targetDateStr);
-
+        while (true) {
             // API 호출
-            FscIndexResponseDto responseDto = openApiFetchService.fetchStockMarketIndex(targetDateStr, 100, 1);
+            FscIndexResponseDto responseDto = openApiFetchService.fetchStockMarketIndex(targetDateStr, numOfRows, pageNo);
 
-            // 응답 데이터에서 타겟 지수와 일치하는 데이터 찾기 및 파싱
-            extractTargetItem(responseDto, indexInfo.getIndexName())
-                .map(item -> openApiDataMapper.mapToEntity(item, indexInfo))
-                .ifPresentOrElse(
-                    indexData -> {
-                        collectedData.add(indexData);
-                        log.debug("데이터 파싱 성공: 날짜={}, 종가={}", indexData.getBaseDate(), indexData.getClosingPrice());
-                    },
-                    () -> log.debug("해당 일자 데이터 없음 - 일자: {}", targetDateStr)
-                );
+            // 응답 포맷이 비정상일 경우 종료
+            if (responseDto == null || responseDto.response() == null || responseDto.response().body() == null) {
+                break;
+            }
 
-            // 다음 날짜로 이동
-            currentDate = currentDate.plusDays(1);
+            FscIndexResponseDto.Body body = responseDto.response().body();
+
+            // 현재 페이지의 데이터 목록에서 타겟 지수명이 있는지 검사
+            if (body.items() != null && body.items().item() != null) {
+                Optional<FscIndexResponseDto.Item> foundItem = body.items().item().stream()
+                    .filter(item -> item.idxNm().equals(targetIndexName))
+                    .findFirst();
+
+                // 타겟 지수를 찾았다면 바로 반환 (탐색 종료)
+                if (foundItem.isPresent()) {
+                    return foundItem;
+                }
+            }
+
+            // 현재 페이지에 타겟 지수가 없다면, 다음 페이지가 있는지 검사
+            int totalCount = body.totalCount();
+
+            // 더 이상 조회할 데이터가 없거나, 전체 개수가 0이면 탐색 종료
+            if (pageNo * numOfRows >= totalCount || totalCount == 0) {
+                break;
+            }
+            // 다음 페이지로 이동
+            pageNo++;
         }
 
-        log.info("[OpenAPI 데이터 수집 완료] 지수명: {}, 수집된 데이터 개수: {}개", indexInfo.getIndexName(), collectedData.size());
-        return collectedData;
-    }
-
-    /**
-     * API 응답 리스트에서 우리가 원하는 지수명(예: "코스피")만 정확히 필터링해서 추출
-     */
-    private Optional<FscIndexResponseDto.Item> extractTargetItem(FscIndexResponseDto dto, String targetIndexName) {
-        if (dto == null || dto.response() == null || dto.response().body() == null || dto.response().body().items() == null || dto.response().body().items().item() == null) {
-            return Optional.empty();
-        }
-
-        return dto.response().body().items().item().stream()
-            .filter(item -> item.idxNm().equals(targetIndexName))
-            .findFirst();
+        // 끝까지 뒤졌지만 찾지 못한 경우 (휴장일 등)
+        return Optional.empty();
     }
 }

@@ -28,7 +28,7 @@ public class FscIndexScheduler {
     /**
      * 매일 자정에 실행 (초 분 시 일 월 요일)
      */
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "${schedule.cron}")
     public void syncFscIndexData() {
         log.info("========== 공공데이터포털 지수 데이터 동기화 ==========");
 

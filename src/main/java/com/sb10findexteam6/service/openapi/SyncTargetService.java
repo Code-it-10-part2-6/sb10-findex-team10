@@ -29,7 +29,7 @@ public class SyncTargetService {
 
     // 연동해야 할 지수 목록을 반환
     public List<IndexInfo> getOpenApiTargetIndexes() {
-        return indexInfoRepository.findAllBySourceType(SourceType.OPEN_API);
+        return indexInfoRepository.findEnabledAutoSyncIndexes(SourceType.OPEN_API);
     }
 
     /**

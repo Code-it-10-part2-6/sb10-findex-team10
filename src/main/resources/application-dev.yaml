@@ -20,3 +20,6 @@ open-api:
     base-url: "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService"
     service-key: ${OPEN_API_KEY:}
     default-sync-days: 365 # 초기 연동 시 1년 치 데이터를 가져오도록 설정
+
+schedule:
+  cron: "0 0 0 * * ?" # 매일 자정 실행

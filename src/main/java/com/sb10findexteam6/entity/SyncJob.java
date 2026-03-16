@@ -1,3 +1,4 @@
+
 package com.sb10findexteam6.entity;
 
 import com.sb10findexteam6.common.entity.BaseEntity;
