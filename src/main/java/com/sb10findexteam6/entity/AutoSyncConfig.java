@@ -19,7 +19,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@AllArgsConstructor
 public class AutoSyncConfig extends BaseEntity {
 
   @Column(name = "enabled", nullable = false)
