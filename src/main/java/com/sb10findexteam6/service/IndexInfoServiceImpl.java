@@ -1,9 +1,12 @@
 package com.sb10findexteam6.service;
 
 
+import com.sb10findexteam6.common.enums.JobType;
+import com.sb10findexteam6.common.enums.Result;
 import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
+import com.sb10findexteam6.dto.SyncJobDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
@@ -12,18 +15,23 @@ import com.sb10findexteam6.dto.indexinfo.IndexInfoUpdateRequest;
 import com.sb10findexteam6.dto.openapi.FscIndexResponseDto;
 import com.sb10findexteam6.entity.AutoSyncConfig;
 import com.sb10findexteam6.entity.IndexInfo;
+import com.sb10findexteam6.entity.SyncJob;
 import com.sb10findexteam6.mapper.IndexInfoMapper;
 import com.sb10findexteam6.mapper.PagingMapper;
 import com.sb10findexteam6.repository.AutoSyncConfigRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
+import com.sb10findexteam6.repository.SyncJobRepository;
 import com.sb10findexteam6.service.openapi.OpenApiFetchService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class IndexInfoServiceImpl implements IndexInfoService{
   private final IndexInfoRepository indexInfoRepository;
@@ -38,6 +47,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
   private final IndexInfoMapper indexInfoMapper;
   private final PagingMapper pagingMapper;
   private final OpenApiFetchService openApiFetchService;
+  private final SyncJobRepository syncJobRepository;
 
 
   @Override
@@ -49,8 +59,6 @@ public class IndexInfoServiceImpl implements IndexInfoService{
     {
       throw new IllegalArgumentException("이미 존재하는 지수 정보입니다.");
     }
-
-    //Open API를 활용해 자동으로 등록할 수 있습니다. API키 들어오면 구현
 
     IndexInfo indexInfo = new IndexInfo(
         request.indexClassification(),
@@ -71,28 +79,65 @@ public class IndexInfoServiceImpl implements IndexInfoService{
 
   @Override
   @Transactional
-  public List<IndexInfoDto> createFromOpenApi(String targetDate) {
+  public List<SyncJobDto> syncFromOpenApi(String targetDate, String worker) {
     FscIndexResponseDto response = openApiFetchService.fetchStockMarketIndex(targetDate, 100, 1);
 
-    List<IndexInfoDto> result = new ArrayList<>();
+    List<SyncJobDto> result = new ArrayList<>();
     for (FscIndexResponseDto.Item item : response.response().body().items().item()) {
-      if (indexInfoRepository.existsByIndexClassificationAndIndexName(
-          item.idxCsf(), item.idxNm())) {
-        continue;
-      }
 
-      IndexInfo indexInfo = new IndexInfo(
-          item.idxCsf(),
-          item.idxNm(),
-          Integer.parseInt(item.epyItmsCnt()),
-          LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
-          new BigDecimal(item.basIdx()),
-          SourceType.OPEN_API,
-          false
-      );
-      indexInfoRepository.save(indexInfo);
-      autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
-      result.add(indexInfoMapper.toDto(indexInfo));
+      try {
+        Optional<IndexInfo> existing = indexInfoRepository
+            .findByIndexClassificationAndIndexName(item.idxCsf(), item.idxNm());
+
+        if (existing.isPresent()) {
+          existing.get().update(
+              Integer.parseInt(item.epyItmsCnt()),
+              LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
+              new BigDecimal(item.basIdx()),
+              existing.get().isFavorite()
+          );
+          SyncJob syncJob = new SyncJob(
+              existing.get(), JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
+          );
+          syncJobRepository.save(syncJob);
+          result.add(new SyncJobDto(
+              syncJob.getId(),
+              syncJob.getJobType(),
+              syncJob.getIndexInfo().getId(),
+              syncJob.getTargetDate(),
+              syncJob.getWorker(),
+              syncJob.getJobTime(),
+              syncJob.getResult()
+          ));
+        } else {
+          IndexInfo indexInfo = new IndexInfo(
+              item.idxCsf(),
+              item.idxNm(),
+              Integer.parseInt(item.epyItmsCnt()),
+              LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
+              new BigDecimal(item.basIdx()),
+              SourceType.OPEN_API,
+              false
+          );
+          indexInfoRepository.save(indexInfo);
+          autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
+          SyncJob syncJob = new SyncJob(
+              indexInfo, JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
+          );
+          syncJobRepository.save(syncJob);
+          result.add(new SyncJobDto(
+              syncJob.getId(),
+              syncJob.getJobType(),
+              syncJob.getIndexInfo().getId(),
+              syncJob.getTargetDate(),
+              syncJob.getWorker(),
+              syncJob.getJobTime(),
+              syncJob.getResult()
+          ));
+        }
+      } catch (Exception e) {
+        log.error("[지수 정보 자동 연동(수정) 실패]");
+      }
     }
     return result;
   }
@@ -110,11 +155,10 @@ public class IndexInfoServiceImpl implements IndexInfoService{
         request.baseIndex(),
         request.favorite()
     );
-
-    //{채용 종목 수}, {기준 시점}, {기준 지수}는 Open API를 활용해 자동으로 수정할 수 있습니다. API키 들어오면 구현
-
     return indexInfoMapper.toDto(indexInfo);
   }
+
+
 
   @Override
   @Transactional(readOnly = true)

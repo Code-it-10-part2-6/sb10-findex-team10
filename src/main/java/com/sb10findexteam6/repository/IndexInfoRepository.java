@@ -1,6 +1,5 @@
 package com.sb10findexteam6.repository;
 
-import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.entity.IndexInfo;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
-
   boolean existsByIndexClassificationAndIndexName(
       String indexClassification,
       String indexName
@@ -60,9 +58,4 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
       @Param("favorite") Boolean favorite
   );
 
-  // 특정 출처(sourceType)를 가 지수 목록 조회
-  // 스케줄러가 OpenAPI 연동 지수 찾을 때 사용
-  @Query("SELECT a.indexInfo FROM AutoSyncConfig a " +
-      "WHERE a.enabled = true AND a.indexInfo.sourceType = :sourceType")
-  List<IndexInfo> findEnabledAutoSyncIndexes(@Param("sourceType") SourceType sourceType);
 }
