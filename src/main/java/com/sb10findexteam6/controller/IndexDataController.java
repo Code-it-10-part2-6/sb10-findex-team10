@@ -1,6 +1,6 @@
 package com.sb10findexteam6.controller;
 
-import com.sb10findexteam6.dto.PagingResponse;
+import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
 import com.sb10findexteam6.dto.indexdata.IndexDataDto;
 import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
@@ -41,7 +41,7 @@ public class IndexDataController {
   }
 
   @GetMapping
-  public PagingResponse<IndexDataDto> getAll(
+  public CursorPageResponse<IndexDataDto> getAll(
       @RequestParam(required = false) Long indexInfoId,
       @RequestParam(required = false) LocalDate startDate,
       @RequestParam(required = false) LocalDate endDate,
