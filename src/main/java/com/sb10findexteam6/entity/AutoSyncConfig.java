@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "auto_sync_config")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class AutoSyncConfig extends BaseEntity {
 
   @Column(name = "enabled", nullable = false)
