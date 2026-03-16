@@ -14,5 +14,5 @@ public interface IndexDataService {
 
     IndexDataDto getById(Long id);
     // 목록 조회는 나중에 구현
-    PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition);
+    //PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition);
 }

@@ -23,4 +23,9 @@ public class AutoSyncConfig extends BaseEntity {
   @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
   @JoinColumn(name = "index_info_id", nullable = false, unique = true)
   private IndexInfo indexInfo;
+
+  public AutoSyncConfig(IndexInfo indexInfo) {
+    this.enabled = false;  // 기본값 비활성화
+    this.indexInfo = indexInfo;
+  }
 }
