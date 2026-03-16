@@ -9,12 +9,18 @@ import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSummaryDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoUpdateRequest;
+import com.sb10findexteam6.dto.openapi.FscIndexResponseDto;
 import com.sb10findexteam6.entity.AutoSyncConfig;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.IndexInfoMapper;
 import com.sb10findexteam6.mapper.PagingMapper;
 import com.sb10findexteam6.repository.AutoSyncConfigRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
+import com.sb10findexteam6.service.openapi.OpenApiFetchService;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +37,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
   private final AutoSyncConfigRepository autoSyncConfigRepository;
   private final IndexInfoMapper indexInfoMapper;
   private final PagingMapper pagingMapper;
+  private final OpenApiFetchService openApiFetchService;
 
 
   @Override
@@ -62,6 +69,35 @@ public class IndexInfoServiceImpl implements IndexInfoService{
 
   @Override
   @Transactional
+  public List<IndexInfoDto> createFromOpenApi(String targetDate) {
+    FscIndexResponseDto response = openApiFetchService.fetchStockMarketIndex(targetDate, 100, 1);
+
+    List<IndexInfoDto> result = new ArrayList<>();
+    for (FscIndexResponseDto.Item item : response.response().body().items().item()) {
+      if (indexInfoRepository.existsByIndexClassificationAndIndexName(
+          item.idxCsf(), item.idxNm())) {
+        continue;
+      }
+
+      IndexInfo indexInfo = new IndexInfo(
+          item.idxCsf(),
+          item.idxNm(),
+          Integer.parseInt(item.epyItmsCnt()),
+          LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
+          new BigDecimal(item.basIdx()),
+          SourceType.OPEN_API,
+          false
+      );
+      indexInfoRepository.save(indexInfo);
+      autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
+      result.add(indexInfoMapper.toDto(indexInfo));
+    }
+    return result;
+  }
+
+
+  @Override
+  @Transactional
   public IndexInfoDto update(Long id, IndexInfoUpdateRequest request) {
     IndexInfo indexInfo = indexInfoRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 id의 지수 정보가 없습니다"));
@@ -89,8 +125,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
   public void delete(Long id) {
     IndexInfo indexInfo = indexInfoRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 id의 지수 정보가 없습니다"));
-   // indexDataRepository.deleteByIndexInfo(indexInfo);
-    // indexData메서드 확인후 파라미터 수정 CascadeType.REMOVE , orphanRemoval = true 설정할건지 논의하기
+    autoSyncConfigRepository.deleteByIndexInfo(indexInfo);//일단 하이버네이트라서 적용 안될 수 있으니 후에 수정가능성 있음
     indexInfoRepository.delete(indexInfo);
   }
 

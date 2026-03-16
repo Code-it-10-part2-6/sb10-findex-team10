@@ -15,6 +15,7 @@ public interface IndexInfoService {
   void delete(Long id);
   CursorPageResponseIndexInfoDto findIndexInfoList(IndexInfoSearchRequest request) ;
   List<IndexInfoSummaryDto> findSummaryList();
+  List<IndexInfoDto> createFromOpenApi(String targetDate);
 
 
 }
