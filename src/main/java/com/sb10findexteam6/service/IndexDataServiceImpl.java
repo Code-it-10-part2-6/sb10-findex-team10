@@ -4,10 +4,7 @@ import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.common.exception.BusinessException;
 import com.sb10findexteam6.common.exception.ErrorCode;
 import com.sb10findexteam6.dto.PagingResponse;
-import com.sb10findexteam6.dto.indexdata.IndexDataCreateRequest;
-import com.sb10findexteam6.dto.indexdata.IndexDataDto;
-import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
-import com.sb10findexteam6.dto.indexdata.IndexDataUpdateRequest;
+import com.sb10findexteam6.dto.indexdata.*;
 import com.sb10findexteam6.entity.IndexData;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.PagingMapper;
@@ -126,28 +123,18 @@ public class IndexDataServiceImpl implements IndexDataService {
   public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
     int size = condition.getSize() != null ? condition.getSize() : 10;
 
-//    List<IndexData> results = indexDataRepository.search(condition);
-//    boolean hasNext = results.size() > size;
-//
-//    List<IndexData> pageItems = hasNext ? results.subList(0, size) : results;
+    IndexDataSortField sortField = resolveSortField(condition.getSortField());
 
-    List<IndexDataDto> content = indexDataRepository.search(condition).stream()
-            .map(this::toDto)
-            .toList();
+    List<IndexDataDto> content =
+        indexDataRepository.search(condition).stream()
+                .map(this::toDto)
+                .toList();
+
     long totalElements = indexDataRepository.count(condition);
-
-//    String nextCursor = null;
-//    Long nextIdAfter = null;
-//
-//    if(!pageItems.isEmpty()) {
-//      IndexData last = pageItems.get(pageItems.size() - 1);
-//      nextCursor = last.getBaseDate().toString();
-//      nextIdAfter = last.getId();
-//    }
 
     return PagingMapper.toDto(
             content,
-            dto->dto.baseDate().toString(),
+            dto -> extractCursorValue(dto, sortField),
             IndexDataDto::id,
             size,
             totalElements
@@ -156,18 +143,41 @@ public class IndexDataServiceImpl implements IndexDataService {
 
   private IndexDataDto toDto(IndexData indexData) {
     return new IndexDataDto(
-        indexData.getId(),
-        indexData.getIndexInfo().getId(),
-        indexData.getBaseDate(),
-        indexData.getSourceType().name(),
-        indexData.getMarketPrice(),
-        indexData.getClosingPrice(),
-        indexData.getHighPrice(),
-        indexData.getLowPrice(),
-        indexData.getVersus(),
-        indexData.getFluctuationRate(),
-        indexData.getTradingQuantity(),
-        indexData.getTradingPrice(),
-        indexData.getMarketTotalAmount());
+            indexData.getId(),
+            indexData.getIndexInfo().getId(),
+            indexData.getBaseDate(),
+            indexData.getSourceType().name(),
+            indexData.getMarketPrice(),
+            indexData.getClosingPrice(),
+            indexData.getHighPrice(),
+            indexData.getLowPrice(),
+            indexData.getVersus(),
+            indexData.getFluctuationRate(),
+            indexData.getTradingQuantity(),
+            indexData.getTradingPrice(),
+            indexData.getMarketTotalAmount()
+    );
+  }
+
+  private IndexDataSortField resolveSortField(String sortField) {
+    if (sortField == null || sortField.isBlank()) {
+      return IndexDataSortField.BASE_DATE;
+    }
+    return IndexDataSortField.from(sortField);
+  }
+
+  private String extractCursorValue(IndexDataDto dto, IndexDataSortField sortField) {
+    return switch (sortField) {
+      case BASE_DATE -> dto.baseDate().toString();
+      case MARKET_PRICE -> dto.marketPrice().toString();
+      case CLOSING_PRICE -> dto.closingPrice().toString();
+      case HIGH_PRICE -> dto.highPrice().toString();
+      case LOW_PRICE -> dto.lowPrice().toString();
+      case VERSUS -> dto.versus().toString();
+      case FLUCTUATION_RATE -> dto.fluctuationRate().toString();
+      case TRADING_QUANTITY -> String.valueOf(dto.tradingQuantity());
+      case TRADING_PRICE -> String.valueOf(dto.tradingPrice());
+      case MARKET_TOTAL_AMOUNT -> String.valueOf(dto.marketTotalAmount());
+    };
   }
 }

@@ -11,6 +11,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -26,58 +27,36 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
     // jpql 기본문 시작 -> where 1=1 은 뒤에 동적 추가 편하게 하기 위해서
     StringBuilder jpql = new StringBuilder("select d from IndexData d where 1=1");
     Map<String, Object> params = new HashMap<>();
-    // 검색 조건이 존재하면 and 문으로 추가해서 직접 쿼리에 추가하는 방식.
-    if (condition.getIndexInfoId() != null) {
-      jpql.append(" and d.indexInfo.id = :indexInfoId");
-      params.put("indexInfoId", condition.getIndexInfoId());
-    }
 
-    if (condition.getStartDate() != null) {
-      jpql.append(" and d.baseDate >= :startDate");
-      params.put("startDate", condition.getStartDate());
-    }
+    appendWhereClause(jpql, params, condition);
 
-    if (condition.getEndDate() != null) {
-      jpql.append(" and d.baseDate <= :endDate");
-      params.put("endDate", condition.getEndDate());
-    }
-
-    // sortField (정렬조건)
     IndexDataSortField sortField = resolveSortField(condition.getSortField());
     String sortDirection = resolveSortDirection(condition.getSortDirection());
 
-    // baseDate 기준 정렬일 때만 커서 페이지네이션 지원
-    if(condition.getCursor() != null && condition.getIdAfter() != null){
-      if(sortField != IndexDataSortField.BASE_DATE){
-        throw new BusinessException(
-                ErrorCode.INVALID_REQUEST,
-                "현재 커서 페이지네이션은 baseDate 정렬만 지원합니다."
-        );
-      }
+    String sortFieldPath = "d." + sortField.getEntityField();
 
-      LocalDate cursorDate;
-      try {
-        cursorDate = LocalDate.parse(condition.getCursor());
-      } catch (Exception e) {
-        throw new BusinessException(
-                ErrorCode.INVALID_REQUEST,
-                "cursor 값이 날짜 형식이 아닙니다: " + condition.getCursor()
-        );
-      }
+    if(condition.getCursor() != null && condition.getIdAfter() != null) {
+      Object cursorValue = parseCursorValue(sortField, condition.getCursor());
 
-      if ("desc".equals(sortDirection)) {
-        jpql.append(" and (d.baseDate < :cursorDate or (d.baseDate = :cursorDate and d.id < : idAfter))");
+      if("desc".equals(sortDirection)) {
+        jpql.append(" and (")
+                .append(sortFieldPath)
+                .append(" < :cursorValue of (")
+                .append(sortFieldPath)
+                .append(" = :cursorValue and d.id < :idAfter))");
       } else {
-        jpql.append(" and (d.baseDate > :cursorDate or (d.baseDate = :cursorDate and d.id > :idAfter))");
+        jpql.append(" and (")
+                .append(sortFieldPath)
+                .append(" > :cursorValue or (")
+                .append(sortFieldPath)
+                .append(" = :cursorValue and d.id > :idAfter))");
       }
 
-      params.put("cursorDate", cursorDate);
+      params.put("cursorValue", cursorValue);
       params.put("idAfter", condition.getIdAfter());
     }
-
-    // 같은 baseDate 값이 있을 떄 id로 구분
-    jpql.append(" order by d.")
-            .append(sortField.getValue())
+    jpql.append(" order by ")
+            .append(sortFieldPath)
             .append(" ")
             .append(sortDirection)
             .append(", d.id ")
@@ -146,5 +125,29 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
       throw new BusinessException(ErrorCode.INVALID_REQUEST, "유효하지 않은 정렬 방향입니다: " + direction);
     }
     return direction;
+  }
+
+  private Object parseCursorValue(IndexDataSortField sortField, String cursor) {
+    try {
+      if (sortField.getValueType().equals(LocalDate.class)) {
+        return LocalDate.parse(cursor);
+      }
+      if (sortField.getValueType().equals(BigDecimal.class)) {
+        return new BigDecimal(cursor);
+      }
+      if (sortField.getValueType().equals(Long.class)) {
+        return Long.parseLong(cursor);
+      }
+    } catch (Exception e) {
+      throw new BusinessException(
+              ErrorCode.INVALID_REQUEST,
+              "cursor 값이 올바르지 않습니다: " + cursor
+      );
+    }
+
+    throw new BusinessException(
+            ErrorCode.INVALID_REQUEST,
+            "지원하지 않는 정렬 필드 타입입니다."
+    );
   }
 }
