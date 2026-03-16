@@ -92,7 +92,43 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
     return query.getResultList();
   }
 
+  @Override
+  public long count(IndexDataSearchCondition condition) {
+    StringBuilder jpql = new StringBuilder("select count(d) from IndexData d where 1=1");
+    Map<String, Object> params = new HashMap<>();
+
+    appendWhereClause(jpql, params, condition);
+
+    TypedQuery<Long> query = em.createQuery(jpql.toString(), Long.class);
+    params.forEach(query::setParameter);
+
+    return query.getSingleResult();
+  }
+
   // 클래스 내 사용 메서드들
+  //
+  private void appendWhereClause(
+          StringBuilder jpql,
+          Map<String, Object> params,
+          IndexDataSearchCondition condition
+  ) {
+    if (condition.getIndexInfoId() != null) {
+      jpql.append(" and d.indexInfo.id = :indexInfoId");
+      params.put("indexInfoId", condition.getIndexInfoId());
+    }
+
+    if (condition.getStartDate() != null) {
+      jpql.append(" and d.baseDate >= :startDate");
+      params.put("startDate", condition.getStartDate());
+    }
+
+    if (condition.getEndDate() != null) {
+      jpql.append(" and d.baseDate <= :endDate");
+      params.put("endDate", condition.getEndDate());
+    }
+  }
+
+  // 정렬 조건 기본값은 baseDate / desc 순으로
   private IndexDataSortField resolveSortField(String sortField) {
     if (sortField == null || sortField.isBlank()) {
       return IndexDataSortField.BASE_DATE;

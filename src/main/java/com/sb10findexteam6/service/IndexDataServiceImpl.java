@@ -10,6 +10,7 @@ import com.sb10findexteam6.dto.indexdata.IndexDataSearchCondition;
 import com.sb10findexteam6.dto.indexdata.IndexDataUpdateRequest;
 import com.sb10findexteam6.entity.IndexData;
 import com.sb10findexteam6.entity.IndexInfo;
+import com.sb10findexteam6.mapper.PagingMapper;
 import com.sb10findexteam6.repository.IndexDataRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -125,31 +126,31 @@ public class IndexDataServiceImpl implements IndexDataService {
   public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
     int size = condition.getSize() != null ? condition.getSize() : 10;
 
-    List<IndexData> results = indexDataRepository.search(condition);
-    boolean hasNext = results.size() > size;
+//    List<IndexData> results = indexDataRepository.search(condition);
+//    boolean hasNext = results.size() > size;
+//
+//    List<IndexData> pageItems = hasNext ? results.subList(0, size) : results;
 
-    List<IndexData> pageItems = hasNext ? results.subList(0, size) : results;
-
-    List<IndexDataDto> content = pageItems.stream()
+    List<IndexDataDto> content = indexDataRepository.search(condition).stream()
             .map(this::toDto)
             .toList();
+    long totalElements = indexDataRepository.count(condition);
 
-    String nextCursor = null;
-    Long nextIdAfter = null;
+//    String nextCursor = null;
+//    Long nextIdAfter = null;
+//
+//    if(!pageItems.isEmpty()) {
+//      IndexData last = pageItems.get(pageItems.size() - 1);
+//      nextCursor = last.getBaseDate().toString();
+//      nextIdAfter = last.getId();
+//    }
 
-    if(!pageItems.isEmpty()) {
-      IndexData last = pageItems.get(pageItems.size() - 1);
-      nextCursor = last.getBaseDate().toString();
-      nextIdAfter = last.getId();
-    }
-
-    return new PagingResponse<>(
+    return PagingMapper.toDto(
             content,
-            nextCursor,
-            nextIdAfter,
+            dto->dto.baseDate().toString(),
+            IndexDataDto::id,
             size,
-            content.size(),
-            hasNext
+            totalElements
     );
   }
 

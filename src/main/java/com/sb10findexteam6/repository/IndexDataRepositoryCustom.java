@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface IndexDataRepositoryCustom {
   List<IndexData> search(IndexDataSearchCondition condition);
+
+  long count(IndexDataSearchCondition condition);
 }

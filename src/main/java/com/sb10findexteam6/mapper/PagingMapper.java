@@ -17,6 +17,7 @@ public class PagingMapper {
       int size, // 한번에 몇개의 데이터를 로드하는 사이즈
       long totalElements
   ) {
+    
     boolean hasNext = content.size() > size;
     List<T> result = hasNext ? content.subList(0, size) : content;
 
