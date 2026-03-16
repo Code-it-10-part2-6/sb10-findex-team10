@@ -43,6 +43,8 @@ public class IndexInfoServiceImpl implements IndexInfoService{
       throw new IllegalArgumentException("이미 존재하는 지수 정보입니다.");
     }
 
+    //Open API를 활용해 자동으로 등록할 수 있습니다. API키 들어오면 구현
+
     IndexInfo indexInfo = new IndexInfo(
         request.indexClassification(),
         request.indexName(),
@@ -72,6 +74,8 @@ public class IndexInfoServiceImpl implements IndexInfoService{
         request.baseIndex(),
         request.favorite()
     );
+
+    //{채용 종목 수}, {기준 시점}, {기준 지수}는 Open API를 활용해 자동으로 수정할 수 있습니다. API키 들어오면 구현
 
     return indexInfoMapper.toDto(indexInfo);
   }

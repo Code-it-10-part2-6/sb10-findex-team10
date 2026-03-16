@@ -9,4 +9,7 @@ public record CursorPageResponse<T>(
     int size,
     long totalElements,
     boolean hasNext
-) {}
+) {
+
+}
+
