@@ -123,12 +123,34 @@ public class IndexDataServiceImpl implements IndexDataService {
   @Override
   @Transactional(readOnly = true)
   public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
-    List<IndexDataDto> content =
-        indexDataRepository.search(condition).stream().map(this::toDto).toList();
-
     int size = condition.getSize() != null ? condition.getSize() : 10;
 
-    return new PagingResponse<>(content, null, null, size, content.size(), false);
+    List<IndexData> results = indexDataRepository.search(condition);
+    boolean hasNext = results.size() > size;
+
+    List<IndexData> pageItems = hasNext ? results.subList(0, size) : results;
+
+    List<IndexDataDto> content = pageItems.stream()
+            .map(this::toDto)
+            .toList();
+
+    String nextCursor = null;
+    Long nextIdAfter = null;
+
+    if(!pageItems.isEmpty()) {
+      IndexData last = pageItems.get(pageItems.size() - 1);
+      nextCursor = last.getBaseDate().toString();
+      nextIdAfter = last.getId();
+    }
+
+    return new PagingResponse<>(
+            content,
+            nextCursor,
+            nextIdAfter,
+            size,
+            content.size(),
+            hasNext
+    );
   }
 
   private IndexDataDto toDto(IndexData indexData) {

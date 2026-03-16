@@ -11,6 +11,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +46,48 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
     IndexDataSortField sortField = resolveSortField(condition.getSortField());
     String sortDirection = resolveSortDirection(condition.getSortDirection());
 
-    jpql.append(" order by d.").append(sortField.getValue()).append(" ").append(sortDirection);
+    // baseDate 기준 정렬일 때만 커서 페이지네이션 지원
+    if(condition.getCursor() != null && condition.getIdAfter() != null){
+      if(sortField != IndexDataSortField.BASE_DATE){
+        throw new BusinessException(
+                ErrorCode.INVALID_REQUEST,
+                "현재 커서 페이지네이션은 baseDate 정렬만 지원합니다."
+        );
+      }
+
+      LocalDate cursorDate;
+      try {
+        cursorDate = LocalDate.parse(condition.getCursor());
+      } catch (Exception e) {
+        throw new BusinessException(
+                ErrorCode.INVALID_REQUEST,
+                "cursor 값이 날짜 형식이 아닙니다: " + condition.getCursor()
+        );
+      }
+
+      if ("desc".equals(sortDirection)) {
+        jpql.append(" and (d.baseDate < :cursorDate or (d.baseDate = :cursorDate and d.id < : idAfter))");
+      } else {
+        jpql.append(" and (d.baseDate > :cursorDate or (d.baseDate = :cursorDate and d.id > :idAfter))");
+      }
+
+      params.put("cursorDate", cursorDate);
+      params.put("idAfter", condition.getIdAfter());
+    }
+
+    // 같은 baseDate 값이 있을 떄 id로 구분
+    jpql.append(" order by d.")
+            .append(sortField.getValue())
+            .append(" ")
+            .append(sortDirection)
+            .append(", d.id ")
+            .append(sortDirection);
 
     TypedQuery<IndexData> query = em.createQuery(jpql.toString(), IndexData.class);
     params.forEach(query::setParameter);
 
     int size = condition.getSize() != null ? condition.getSize() : 10;
-    query.setMaxResults(size);
+    query.setMaxResults(size + 1); // hasNext 때문에
 
     return query.getResultList();
   }
