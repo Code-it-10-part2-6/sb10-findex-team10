@@ -92,19 +92,19 @@ public class IndexDataServiceImpl implements IndexDataService {
         return toDto(indexData);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
-        // 목록 조회 구현 전 임시 반환
-        int size = condition.getSize() != null ? condition.getSize() : 10;
-        return new PagingResponse<>(
-                List.of(),
-                null,
-                null,
-                size,
-                0L,
-                false);
-    }
+//    @Override
+//    @Transactional(readOnly = true)
+//    public PagingResponse<IndexDataDto> getAll(IndexDataSearchCondition condition) {
+//        // 목록 조회 구현 전 임시 반환
+//        int size = condition.getSize() != null ? condition.getSize() : 10;
+//        return new PagingResponse<>(
+//                List.of(),
+//                null,
+//                null,
+//                size,
+//                0L,
+//                false);
+//    }
 
 
     private IndexDataDto toDto(IndexData indexData) {

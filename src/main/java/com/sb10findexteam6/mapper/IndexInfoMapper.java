@@ -1,8 +1,8 @@
 package com.sb10findexteam6.mapper;
 
 
-import com.sb10findexteam6.dto.IndexInfoDto;
-import com.sb10findexteam6.dto.IndexInfoSummaryDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
+import com.sb10findexteam6.dto.indexinfo.IndexInfoSummaryDto;
 import com.sb10findexteam6.entity.IndexInfo;
 import org.springframework.stereotype.Component;
 
