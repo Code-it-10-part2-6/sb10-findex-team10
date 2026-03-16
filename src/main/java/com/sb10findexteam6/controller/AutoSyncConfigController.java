@@ -1,7 +1,9 @@
 package com.sb10findexteam6.controller;
 
 import com.sb10findexteam6.common.exception.ErrorResponse;
+import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigDto;
+import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigSearchCondition;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigUpdateRequest;
 import com.sb10findexteam6.service.AutoSyncConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -95,8 +97,18 @@ public class AutoSyncConfigController {
       ),
   })
   @GetMapping
-  public ResponseEntity<List<AutoSyncConfigDto>> getAll() {
-    // 페이징 시 수정
-    return ResponseEntity.ok(autoSyncConfigService.getAll());
+  public ResponseEntity<CursorPageResponse<AutoSyncConfigDto>> getAll(
+      @RequestParam(required = false) Long indexInfoId,
+      @RequestParam(required = false) Boolean enabled,
+      @RequestParam(required = false) Long idAfter,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false, defaultValue = "indexInfo.indexName") String sortField,
+      @RequestParam(required = false, defaultValue = "asc") String sortDirection,
+      @RequestParam(required = false, defaultValue = "10") Integer size
+  ) {
+    AutoSyncConfigSearchCondition condition = new AutoSyncConfigSearchCondition(
+        indexInfoId, enabled, idAfter, cursor, sortField, sortDirection, size
+    );
+    return ResponseEntity.ok(autoSyncConfigService.getAll(condition));
   }
 }

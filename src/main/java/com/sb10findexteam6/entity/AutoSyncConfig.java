@@ -22,7 +22,7 @@ import lombok.Setter;
 public class AutoSyncConfig extends BaseEntity {
 
   @Column(name = "enabled", nullable = false)
-  private boolean enabled;
+  private Boolean enabled;
 
   @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
   @JoinColumn(name = "index_info_id", nullable = false, unique = true)

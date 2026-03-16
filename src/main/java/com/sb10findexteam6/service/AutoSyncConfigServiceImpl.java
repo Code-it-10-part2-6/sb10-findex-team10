@@ -2,12 +2,16 @@ package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.common.exception.BusinessException;
 import com.sb10findexteam6.common.exception.ErrorCode;
+import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigDto;
+import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigSearchCondition;
 import com.sb10findexteam6.dto.autosyncconfig.AutoSyncConfigUpdateRequest;
 import com.sb10findexteam6.entity.AutoSyncConfig;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.AutoSyncConfigMapper;
+import com.sb10findexteam6.mapper.PagingMapper;
 import com.sb10findexteam6.repository.AutoSyncConfigRepository;
+import com.sb10findexteam6.repository.AutoSyncConfigRepositoryCustom.AutoSyncConfigSearchResult;
 import com.sb10findexteam6.repository.IndexInfoRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,7 @@ public class AutoSyncConfigServiceImpl implements AutoSyncConfigService{
   private final AutoSyncConfigRepository autoSyncConfigRepository;
   private final IndexInfoRepository indexInfoRepository;
   private final AutoSyncConfigMapper autoSyncConfigMapper;
+  private final PagingMapper pagingMapper;
 
   @Override
   public AutoSyncConfigDto create(Long indexInfoId) {
@@ -46,10 +51,27 @@ public class AutoSyncConfigServiceImpl implements AutoSyncConfigService{
 
   @Override
   @Transactional(readOnly = true)
-  public List<AutoSyncConfigDto> getAll() {
-    return autoSyncConfigRepository.findAll().stream()
+  public CursorPageResponse<AutoSyncConfigDto> getAll(AutoSyncConfigSearchCondition condition) {
+    Long resolvedIdAfter = pagingMapper.resolveIdAfter(
+        condition.getCursor(),
+        condition.getIdAfter()
+    );
+    condition.setIdAfter(resolvedIdAfter);
+
+    AutoSyncConfigSearchResult result = autoSyncConfigRepository.search(condition);
+
+    List<AutoSyncConfigDto> dtoList = result.content().stream()
         .map(autoSyncConfigMapper::toDto)
-        .toList(); // 페이징 미적용
+        .toList();
+
+    int size = condition.getSize() != null ? condition.getSize() : 10;
+
+    return pagingMapper.toResponse(
+        dtoList,
+        size,
+        result.totalCount(),
+        AutoSyncConfigDto::id
+    );
   }
 
   @Override
