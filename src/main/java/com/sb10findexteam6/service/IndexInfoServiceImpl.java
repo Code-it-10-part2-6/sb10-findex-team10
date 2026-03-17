@@ -6,7 +6,7 @@ import com.sb10findexteam6.common.enums.Result;
 import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.dto.CursorPageResponse;
 import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
-import com.sb10findexteam6.dto.SyncJobDto;
+import com.sb10findexteam6.dto.syncJob.SyncJobDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;
