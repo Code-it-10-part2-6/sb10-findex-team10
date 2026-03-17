@@ -116,9 +116,22 @@ public class SyncJobServiceImpl implements SyncJobService {
 
     @Override
     public List<SyncJobDto> syncIndexInfos(String worker) {
+        // 데이터가 있는 날짜 최대 7일까지 탐색
         String resolvedWorker = resolveWorker(worker);
-        String targetDate = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        return indexInfoService.syncFromOpenApi(targetDate, resolvedWorker);
+
+        LocalDate date = LocalDate.now();
+        int maxFallbackDays = 7;
+
+        for (int i = 0; i < maxFallbackDays; i++) {
+            String targetDate = date.minusDays(i).format(DateTimeFormatter.BASIC_ISO_DATE);
+            List<SyncJobDto> result = indexInfoService.syncFromOpenApi(targetDate, resolvedWorker);
+
+            if (result != null && !result.isEmpty()) {
+                return result;
+            }
+        }
+
+        return List.of();
     }
 
     @Override
