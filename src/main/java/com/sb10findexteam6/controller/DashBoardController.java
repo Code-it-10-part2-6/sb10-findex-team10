@@ -1,9 +1,6 @@
 package com.sb10findexteam6.controller;
 
-import com.sb10findexteam6.dto.dashboard.IndexPerformanceDto;
-import com.sb10findexteam6.dto.dashboard.IndexChartDto;
-import com.sb10findexteam6.dto.dashboard.IndexPerformanceRankDto;
-import com.sb10findexteam6.dto.dashboard.PeriodType;
+import com.sb10findexteam6.dto.dashboard.*;
 import com.sb10findexteam6.service.DashBoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +37,14 @@ public class DashBoardController {
     }
 
      // 지수 성과 랭킹 조회
-    @GetMapping("/api/index-data/performance/rank")
-    public ResponseEntity<List<IndexPerformanceRankDto>> getPerformanceRank(
-            @RequestParam(required = false) Long indexInfoId,
-            @RequestParam(defaultValue = "DAILY") PeriodType periodType,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
-        return ResponseEntity.ok(
-                dashBoardService.getPerformanceRank(indexInfoId, periodType, limit)
-        );
-    }
+     @GetMapping("/api/index-data/performance/rank")
+     public ResponseEntity<List<RankedIndexPerformanceDto>> getPerformanceRank(
+             @RequestParam(required = false) Long indexInfoId,
+             @RequestParam(defaultValue = "DAILY") PeriodType periodType,
+             @RequestParam(defaultValue = "10") int limit
+     ) {
+         return ResponseEntity.ok(
+                 dashBoardService.getPerformanceRank(indexInfoId, periodType, limit)
+         );
+     }
 }

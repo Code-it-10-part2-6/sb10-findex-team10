@@ -2,10 +2,7 @@ package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.common.exception.BusinessException;
 import com.sb10findexteam6.common.exception.ErrorCode;
-import com.sb10findexteam6.dto.dashboard.IndexChartDto;
-import com.sb10findexteam6.dto.dashboard.IndexPerformanceDto;
-import com.sb10findexteam6.dto.dashboard.IndexPerformanceRankDto;
-import com.sb10findexteam6.dto.dashboard.PeriodType;
+import com.sb10findexteam6.dto.dashboard.*;
 import com.sb10findexteam6.entity.IndexData;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.mapper.DashBoardMapper;
@@ -74,7 +71,7 @@ public class DashBoardService {
      * - WEEKLY: 전주 대비
      * - MONTHLY: 전월 대비
      */
-    public List<IndexPerformanceRankDto> getPerformanceRank(
+    public List<RankedIndexPerformanceDto> getPerformanceRank(
             Long indexInfoId,
             PeriodType periodType,
             int limit
@@ -134,21 +131,12 @@ public class DashBoardService {
         return toRankedResponse(performances);
     }
 
-    private List<IndexPerformanceRankDto> toRankedResponse(List<IndexPerformanceDto> performances) {
+    private List<RankedIndexPerformanceDto> toRankedResponse(List<IndexPerformanceDto> performances) {
         return java.util.stream.IntStream.range(0, performances.size())
-                .mapToObj(i -> {
-                    IndexPerformanceDto dto = performances.get(i);
-                    return new IndexPerformanceRankDto(
-                            i + 1,
-                            dto.indexInfoId(),
-                            dto.indexClassification(),
-                            dto.indexName(),
-                            dto.versus(),
-                            dto.fluctuationRate(),
-                            dto.currentPrice(),
-                            dto.beforePrice()
-                    );
-                })
+                .mapToObj(i -> new RankedIndexPerformanceDto(
+                        performances.get(i),
+                        i + 1
+                ))
                 .toList();
     }
 }
