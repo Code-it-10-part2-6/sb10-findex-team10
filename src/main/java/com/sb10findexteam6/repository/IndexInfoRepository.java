@@ -14,8 +14,9 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
   boolean existsByIndexClassificationAndIndexName(
       String indexClassification,
       String indexName
-  );
+  ); // 지수 정보 등록의 {지수 분류명}, {지수명} 조합값은 중복되면 안됩니다.
 
+  // ASC (id > idAfter)
   @Query("""
         SELECT i FROM IndexInfo i
         WHERE (:indexClassification IS NULL OR i.indexClassification LIKE %:indexClassification%)
@@ -31,6 +32,7 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
       Pageable pageable
   );
 
+  // DESC (id < idAfter)
   @Query("""
         SELECT i FROM IndexInfo i
         WHERE (:indexClassification IS NULL OR i.indexClassification LIKE %:indexClassification%)
@@ -46,6 +48,7 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
       Pageable pageable
   );
 
+  // totalElements용 count
   @Query("""
         SELECT COUNT(i) FROM IndexInfo i
         WHERE (:indexClassification IS NULL OR i.indexClassification LIKE %:indexClassification%)

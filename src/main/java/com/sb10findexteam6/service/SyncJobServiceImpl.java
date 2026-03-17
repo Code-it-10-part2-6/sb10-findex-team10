@@ -15,11 +15,16 @@ import com.sb10findexteam6.entity.IndexData;
 import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.entity.SyncJob;
 import com.sb10findexteam6.mapper.SyncJobMapper;
-import com.sb10findexteam6.repository.IndexDataRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
 import com.sb10findexteam6.repository.SyncJobRepository;
 import com.sb10findexteam6.repository.specification.SyncJobSpecification;
-import com.sb10findexteam6.service.openapi.OpenApiFetchService;
+import com.sb10findexteam6.service.openapi.OpenApiSyncService;
+import com.sb10findexteam6.service.openapi.SyncDataPersistenceService;
+import com.sb10findexteam6.common.exception.BusinessException;
+import com.sb10findexteam6.common.exception.ErrorCode;
+import com.sb10findexteam6.entity.IndexData;
+import com.sb10findexteam6.entity.IndexInfo;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,7 +39,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Optional;
+
+// syncIndexInfos, syncIndexData 는 외부 API 호출 로직 구현 후 다시 작성
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +58,8 @@ public class SyncJobServiceImpl implements SyncJobService {
     private final IndexInfoRepository indexInfoRepository;
     private final IndexDataRepository indexDataRepository;
     private final OpenApiFetchService openApiFetchService;
+    private final OpenApiSyncService openApiSyncService;
+    private final SyncDataPersistenceService syncDataPersistenceService;
 
     @Override
     @Transactional(readOnly = true)
@@ -122,183 +133,74 @@ public class SyncJobServiceImpl implements SyncJobService {
         throw new UnsupportedOperationException("지수 정보 연동은 아직 미구현입니다.");
     }
 
+    // 지수 데이터 연동 작업
     @Override
     public List<SyncJobDto> syncIndexData(IndexDataSyncRequest request, String worker) {
-        validateSyncRequest(request);
+        validateIndexDataSyncRequest(request);
 
-        List<IndexInfo> targetIndexInfos = resolveTargetIndexInfos(request.indexInfoIds());
-        List<SyncJob> savedJobs = new ArrayList<>();
+        String resolvedWorker = (worker == null || worker.isBlank()) ? "system" : worker;
 
-        for (LocalDate targetDate = request.baseDateFrom();
-             !targetDate.isAfter(request.baseDateTo());
-             targetDate = targetDate.plusDays(1)) {
+        List<IndexInfo> targetIndexes = resolveTargetIndexes(request.indexInfoIds());
+        List<SyncJobDto> result = new ArrayList<>();
 
-            Map<String, FscIndexResponseDto.Item> itemMap = fetchItemMapByDate(targetDate);
+        LocalDate targetDate = request.baseDateFrom();
 
-            for (IndexInfo indexInfo : targetIndexInfos) {
-                LocalDateTime jobTime = LocalDateTime.now();
-
+        while (!targetDate.isAfter(request.baseDateTo())) {
+            for (IndexInfo indexInfo : targetIndexes) {
                 try {
-                    String key = makeItemKey(indexInfo.getIndexClassification(), indexInfo.getIndexName());
-                    FscIndexResponseDto.Item item = itemMap.get(key);
+                    Optional<IndexData> fetchedDataOpt =
+                            openApiSyncService.fetchOneDayIndexData(indexInfo, targetDate);
 
-                    if (item == null) {
-                        savedJobs.add(saveSyncJob(indexInfo, JobType.INDEX_DATA, targetDate, worker, jobTime, Result.FAILED));
-                        continue;
+                    if (fetchedDataOpt.isPresent()) {
+                        syncDataPersistenceService.saveOneDayDataAndSuccessJob(
+                                indexInfo,
+                                fetchedDataOpt.get(),
+                                targetDate,
+                                resolvedWorker
+                        );
+                    } else {
+                        syncDataPersistenceService.saveOneDaySuccessWithoutData(
+                                indexInfo,
+                                targetDate,
+                                resolvedWorker
+                        );
                     }
 
-                    upsertIndexData(indexInfo, targetDate, item);
-                    savedJobs.add(saveSyncJob(indexInfo, JobType.INDEX_DATA, targetDate, worker, jobTime, Result.SUCCESS));
+                    SyncJobDto latestDto = syncJobRepository.findAll(
+                                    PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "jobTime"))
+                            ).getContent().stream()
+                            .findFirst()
+                            .map(SyncJobMapper::toDto)
+                            .orElse(null);
+
+                    if (latestDto != null) {
+                        result.add(latestDto);
+                    }
+
                 } catch (Exception e) {
-                    savedJobs.add(saveSyncJob(indexInfo, JobType.INDEX_DATA, targetDate, worker, jobTime, Result.FAILED));
+                    syncDataPersistenceService.saveOneDayFailedJob(
+                            indexInfo,
+                            targetDate,
+                            resolvedWorker,
+                            e.getMessage()
+                    );
+
+                    SyncJobDto latestDto = syncJobRepository.findAll(
+                                    PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "jobTime"))
+                            ).getContent().stream()
+                            .findFirst()
+                            .map(SyncJobMapper::toDto)
+                            .orElse(null);
+
+                    if (latestDto != null) {
+                        result.add(latestDto);
+                    }
                 }
             }
+            targetDate = targetDate.plusDays(1);
         }
 
-        return SyncJobMapper.toDtoList(savedJobs);
-    }
-
-    private void validateSyncRequest(IndexDataSyncRequest request) {
-        if (request == null) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "요청 본문이 비어 있습니다.");
-        }
-        if (request.baseDateFrom() == null || request.baseDateTo() == null) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "시작 날짜와 종료 날짜는 필수입니다.");
-        }
-        if (request.baseDateFrom().isAfter(request.baseDateTo())) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "시작 날짜는 종료 날짜보다 이후일 수 없습니다.");
-        }
-    }
-
-    private List<IndexInfo> resolveTargetIndexInfos(List<Long> indexInfoIds) {
-        if (indexInfoIds == null || indexInfoIds.isEmpty()) {
-            return indexInfoRepository.findAll();
-        }
-
-        List<IndexInfo> indexInfos = indexInfoRepository.findAllById(indexInfoIds);
-        if (indexInfos.size() != indexInfoIds.size()) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "존재하지 않는 지수 정보 ID가 포함되어 있습니다.");
-        }
-        return indexInfos;
-    }
-
-    private Map<String, FscIndexResponseDto.Item> fetchItemMapByDate(LocalDate targetDate) {
-        int pageNo = 1;
-        int totalCount = Integer.MAX_VALUE;
-        Map<String, FscIndexResponseDto.Item> itemMap = new LinkedHashMap<>();
-
-        while ((pageNo - 1) * OPEN_API_NUM_OF_ROWS < totalCount) {
-            FscIndexResponseDto response = openApiFetchService.fetchStockMarketIndex(
-                    targetDate.format(DateTimeFormatter.BASIC_ISO_DATE),
-                    OPEN_API_NUM_OF_ROWS,
-                    pageNo
-            );
-
-            validateOpenApiResponse(response);
-
-            FscIndexResponseDto.Body body = response.response().body();
-            totalCount = body.totalCount();
-
-            List<FscIndexResponseDto.Item> items =
-                    body.items() == null || body.items().item() == null
-                            ? List.of()
-                            : body.items().item();
-
-            for (FscIndexResponseDto.Item item : items) {
-                itemMap.put(makeItemKey(item.idxCsf(), item.idxNm()), item);
-            }
-
-            if (items.isEmpty()) {
-                break;
-            }
-
-            pageNo++;
-        }
-
-        return itemMap;
-    }
-
-    private void validateOpenApiResponse(FscIndexResponseDto response) {
-        if (response == null || response.response() == null || response.response().header() == null) {
-            throw new BusinessException(ErrorCode.OPEN_API_COMMUNICATION_ERROR, "공공데이터 응답 형식이 올바르지 않습니다.");
-        }
-
-        String resultCode = response.response().header().resultCode();
-        if (!"00".equals(resultCode)) {
-            throw new BusinessException(
-                    ErrorCode.OPEN_API_COMMUNICATION_ERROR,
-                    "공공데이터 응답 실패: " + resultCode + " / " + response.response().header().resultMsg()
-            );
-        }
-
-        if (response.response().body() == null) {
-            throw new BusinessException(ErrorCode.OPEN_API_COMMUNICATION_ERROR, "공공데이터 응답 body가 비어 있습니다.");
-        }
-    }
-
-    private void upsertIndexData(IndexInfo indexInfo, LocalDate targetDate, FscIndexResponseDto.Item item) {
-        IndexData existing = indexDataRepository
-                .findByIndexInfoIdAndBaseDate(indexInfo.getId(), targetDate)
-                .orElse(null);
-
-        if (existing == null) {
-            indexDataRepository.save(new IndexData(
-                    indexInfo,
-                    targetDate,
-                    SourceType.OPEN_API,
-                    parseBigDecimal(item.mkp()),
-                    parseBigDecimal(item.clpr()),
-                    parseBigDecimal(item.hipr()),
-                    parseBigDecimal(item.lopr()),
-                    parseBigDecimal(item.vs()),
-                    parseBigDecimal(item.fltRt()),
-                    parseLong(item.trqu()),
-                    parseLong(item.trPrc()),
-                    parseLong(item.lstgMrktTotAmt())
-            ));
-            return;
-        }
-
-        existing.update(
-                parseBigDecimal(item.mkp()),
-                parseBigDecimal(item.clpr()),
-                parseBigDecimal(item.hipr()),
-                parseBigDecimal(item.lopr()),
-                parseBigDecimal(item.vs()),
-                parseBigDecimal(item.fltRt()),
-                parseLong(item.trqu()),
-                parseLong(item.trPrc()),
-                parseLong(item.lstgMrktTotAmt())
-        );
-    }
-
-    private SyncJob saveSyncJob(
-            IndexInfo indexInfo,
-            JobType jobType,
-            LocalDate targetDate,
-            String worker,
-            LocalDateTime jobTime,
-            Result result
-    ) {
-        return syncJobRepository.save(new SyncJob(indexInfo, jobType, targetDate, worker, jobTime, result));
-    }
-
-    private String makeItemKey(String indexClassification, String indexName) {
-        return indexClassification + "|" + indexName;
-    }
-
-    private BigDecimal parseBigDecimal(String value) {
-        if (value == null || value.isBlank()) {
-            return BigDecimal.ZERO;
-        }
-        return new BigDecimal(value.trim());
-    }
-
-    private Long parseLong(String value) {
-        if (value == null || value.isBlank()) {
-            return 0L;
-        }
-        return Long.parseLong(value.trim());
+        return result;
     }
 
     private Specification<SyncJob> buildFilterSpec(SyncJobSearchCondition condition) {
@@ -354,5 +256,45 @@ public class SyncJobServiceImpl implements SyncJobService {
             return DEFAULT_SIZE;
         }
         return size;
+    }
+
+    private void validateIndexDataSyncRequest(IndexDataSyncRequest request) {
+        if (request == null) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "연동 요청 정보가 없습니다."
+            );
+        }
+
+        if (request.baseDateFrom() == null || request.baseDateTo() == null) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "대상 날짜 범위는 반드시 지정해야 합니다."
+            );
+        }
+
+        if (request.baseDateFrom().isAfter(request.baseDateTo())) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "시작 날짜는 종료 날짜보다 이후일 수 없습니다."
+            );
+        }
+    }
+
+    private List<IndexInfo> resolveTargetIndexes(List<Long> indexInfoIds) {
+        if (indexInfoIds == null || indexInfoIds.isEmpty()) {
+            return indexInfoRepository.findAll();
+        }
+
+        List<IndexInfo> indexes = indexInfoRepository.findAllById(indexInfoIds);
+
+        if (indexes.size() != indexInfoIds.size()) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "존재하지 않는 지수 정보 ID가 포함되어 있습니다."
+            );
+        }
+
+        return indexes;
     }
 }
