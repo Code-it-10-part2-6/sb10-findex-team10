@@ -72,7 +72,7 @@ public class IndexDataController {
   // 관심 지수 성과 조회
 
   // CSV 파일 Export
-  @GetMapping(value = "/export", produces = "text/csv")
+  @GetMapping(value = "/export/csv")
   public ResponseEntity<byte[]> export(
           @RequestParam(required = false) Long indexInfoId,
           @RequestParam(required = false) LocalDate startDate,
@@ -90,8 +90,8 @@ public class IndexDataController {
     byte[] csv = indexDataService.export(condition);
 
     return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=index-data.csv")
-            .contentType(MediaType.parseMediaType("text/csv"))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"index-data.csv\"")
+            .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
             .body(csv);
   }
 }
