@@ -68,4 +68,13 @@ public interface IndexInfoRepository extends JpaRepository<IndexInfo, Long> {
       @Param("favorite") Boolean favorite
   );
 
+  @Query("""
+    SELECT i
+    FROM IndexInfo i
+    JOIN AutoSyncConfig a ON a.indexInfo = i
+    WHERE a.enabled = true
+      AND i.sourceType = :sourceType
+""")
+  List<IndexInfo> findEnabledAutoSyncIndexes(@Param("sourceType") SourceType sourceType);
+
 }

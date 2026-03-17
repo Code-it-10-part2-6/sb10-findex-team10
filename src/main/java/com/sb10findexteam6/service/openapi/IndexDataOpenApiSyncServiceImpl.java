@@ -1,5 +1,5 @@
 package com.sb10findexteam6.service.openapi;
-
+/*
 import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.dto.openapi.FscIndexResponseDto;
 import com.sb10findexteam6.dto.openapi.OpenApiIndexDataSyncResultDto;
@@ -92,3 +92,4 @@ public class IndexDataOpenApiSyncServiceImpl implements IndexDataOpenApiSyncServ
         );
     }
 }
+*/
