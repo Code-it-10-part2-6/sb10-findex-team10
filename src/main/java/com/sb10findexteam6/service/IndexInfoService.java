@@ -1,7 +1,7 @@
 package com.sb10findexteam6.service;
 
 import com.sb10findexteam6.dto.CursorPageResponseIndexInfoDto;
-import com.sb10findexteam6.dto.SyncJobDto;
+import com.sb10findexteam6.dto.syncJob.SyncJobDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoCreateRequest;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoDto;
 import com.sb10findexteam6.dto.indexinfo.IndexInfoSearchRequest;

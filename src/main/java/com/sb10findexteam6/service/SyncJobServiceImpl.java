@@ -1,11 +1,8 @@
 package com.sb10findexteam6.service;
 
-import com.sb10findexteam6.common.enums.JobType;
 import com.sb10findexteam6.common.enums.Result;
-import com.sb10findexteam6.common.enums.SourceType;
 import com.sb10findexteam6.common.exception.BusinessException;
 import com.sb10findexteam6.common.exception.ErrorCode;
-import com.sb10findexteam6.dto.openapi.FscIndexResponseDto;
 import com.sb10findexteam6.dto.syncJob.CursorPageResponseSyncJobDto;
 import com.sb10findexteam6.dto.syncJob.IndexDataSyncRequest;
 import com.sb10findexteam6.dto.syncJob.SyncJobDto;
@@ -22,11 +19,6 @@ import com.sb10findexteam6.repository.specification.SyncJobSpecification;
 import com.sb10findexteam6.service.openapi.OpenApiFetchService;
 import com.sb10findexteam6.service.openapi.OpenApiSyncService;
 import com.sb10findexteam6.service.openapi.SyncDataPersistenceService;
-import com.sb10findexteam6.common.exception.BusinessException;
-import com.sb10findexteam6.common.exception.ErrorCode;
-import com.sb10findexteam6.entity.IndexData;
-import com.sb10findexteam6.entity.IndexInfo;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,18 +26,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Optional;
-
-// syncIndexInfos, syncIndexData 는 외부 API 호출 로직 구현 후 다시 작성
 
 @Service
 @RequiredArgsConstructor
@@ -54,14 +40,12 @@ public class SyncJobServiceImpl implements SyncJobService {
 
     private static final int DEFAULT_SIZE = 10;
     private static final String DEFAULT_SORT_FIELD = "jobTime";
-    private static final int OPEN_API_NUM_OF_ROWS = 1000;
 
     private final SyncJobRepository syncJobRepository;
     private final IndexInfoRepository indexInfoRepository;
-    private final IndexDataRepository indexDataRepository;
-    private final OpenApiFetchService openApiFetchService;
     private final OpenApiSyncService openApiSyncService;
     private final SyncDataPersistenceService syncDataPersistenceService;
+    private final IndexInfoService indexInfoService;
 
     @Override
     @Transactional(readOnly = true)
@@ -132,15 +116,16 @@ public class SyncJobServiceImpl implements SyncJobService {
 
     @Override
     public List<SyncJobDto> syncIndexInfos(String worker) {
-        throw new UnsupportedOperationException("지수 정보 연동은 아직 미구현입니다.");
+        String resolvedWorker = resolveWorker(worker);
+        String targetDate = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        return indexInfoService.syncFromOpenApi(targetDate, resolvedWorker);
     }
 
-    // 지수 데이터 연동 작업
     @Override
     public List<SyncJobDto> syncIndexData(IndexDataSyncRequest request, String worker) {
         validateIndexDataSyncRequest(request);
 
-        String resolvedWorker = (worker == null || worker.isBlank()) ? "system" : worker;
+        String resolvedWorker = resolveWorker(worker);
 
         List<IndexInfo> targetIndexes = resolveTargetIndexes(request.indexInfoIds());
         List<SyncJobDto> result = new ArrayList<>();
@@ -258,6 +243,10 @@ public class SyncJobServiceImpl implements SyncJobService {
             return DEFAULT_SIZE;
         }
         return size;
+    }
+
+    private String resolveWorker(String worker) {
+        return (worker == null || worker.isBlank()) ? "system" : worker;
     }
 
     private void validateIndexDataSyncRequest(IndexDataSyncRequest request) {
