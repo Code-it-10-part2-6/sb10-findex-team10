@@ -72,7 +72,7 @@ public class IndexDataController {
   // 관심 지수 성과 조회
 
   // CSV 파일 Export
-  @GetMapping(value = "/export/csv", produces = "text/csv; charset=UTF-8")
+  @GetMapping(value = "/export/csv")
   public ResponseEntity<byte[]> export(
           @RequestParam(required = false) Long indexInfoId,
           @RequestParam(required = false) LocalDate startDate,
