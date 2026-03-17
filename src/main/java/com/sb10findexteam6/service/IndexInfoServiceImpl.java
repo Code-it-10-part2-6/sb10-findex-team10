@@ -134,7 +134,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
           );
           syncJobRepository.save(syncJob);
 
-          result.add(SyncJobMapper.toDto(syncJob));;
+          result.add(SyncJobMapper.toDto(syncJob));
         } else {
           IndexInfo indexInfo = new IndexInfo(
                   item.idxCsf(),
@@ -153,7 +153,7 @@ public class IndexInfoServiceImpl implements IndexInfoService{
           );
           syncJobRepository.save(syncJob);
 
-          result.add(SyncJobMapper.toDto(syncJob));;
+          result.add(SyncJobMapper.toDto(syncJob));
         }
       } catch (Exception e) {
         log.error("[지수 정보 연동 실패] idxCsf={}, idxNm={}", item.idxCsf(), item.idxNm(), e);
