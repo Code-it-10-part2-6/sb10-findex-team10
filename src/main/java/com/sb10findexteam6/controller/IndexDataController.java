@@ -80,6 +80,8 @@ public class IndexDataController {
   // 지수 성과 랭킹 조회
   // 관심 지수 성과 조회
 
+  // CSV 파일 Export
+  @GetMapping(value = "/export/csv")
   // CSV 파일 Export\
   @Operation(summary = "지수 데이터 CSV export")
   @GetMapping(value = "/export/csv")
