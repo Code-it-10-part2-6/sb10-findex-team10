@@ -1,7 +1,7 @@
 package com.sb10findexteam6.dto.dashboard;
 
 public record RankedIndexPerformanceDto(
-    IndexPerformanceDto indexPerformanceDto,
+    IndexPerformanceDto performance,
     int rank
 ) {
 
