@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/index-data")
+@RequestMapping("/api/index-datas")
 @RequiredArgsConstructor
 public class IndexDataController {
   private final IndexDataService indexDataService;
@@ -27,12 +27,12 @@ public class IndexDataController {
     return indexDataService.create(request);
   }
 
-  @PatchMapping("{id}")
+  @PatchMapping("/{id}")
   public IndexDataDto update(@PathVariable Long id, @RequestBody IndexDataUpdateRequest request) {
     return indexDataService.update(id, request);
   }
 
-  @DeleteMapping("{id}")
+  @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Long id) {
     indexDataService.delete(id);
@@ -43,6 +43,7 @@ public class IndexDataController {
     return indexDataService.getById(id);
   }
 
+  //목록 조회(필터링, 페이지네이션)
   @GetMapping
   public CursorPageResponse<IndexDataDto> getAll(
       @RequestParam(required = false) Long indexInfoId,
@@ -67,6 +68,7 @@ public class IndexDataController {
     return indexDataService.getAll(condition);
   }
 
+  // CSV 파일 Export
   @GetMapping(value = "/export", produces = "text/csv")
   public ResponseEntity<byte[]> export(
           @RequestParam(required = false) Long indexInfoId,
