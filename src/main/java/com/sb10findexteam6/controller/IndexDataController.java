@@ -67,6 +67,9 @@ public class IndexDataController {
 
     return indexDataService.getAll(condition);
   }
+  // 지수 차트 조회
+  // 지수 성과 랭킹 조회
+  // 관심 지수 성과 조회
 
   // CSV 파일 Export
   @GetMapping(value = "/export", produces = "text/csv")
