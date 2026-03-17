@@ -87,5 +87,4 @@ public class IndexInfoController {
         .status(HttpStatus.OK)
         .body(indexInfoService.findSummaryList());
   }
-
 }
