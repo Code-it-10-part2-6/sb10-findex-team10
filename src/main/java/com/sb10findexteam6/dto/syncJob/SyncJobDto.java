@@ -2,7 +2,6 @@ package com.sb10findexteam6.dto.syncJob;
 
 import com.sb10findexteam6.common.enums.JobType;
 import com.sb10findexteam6.common.enums.Result;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 

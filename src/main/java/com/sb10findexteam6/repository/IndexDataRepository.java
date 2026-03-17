@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
 
 public interface IndexDataRepository extends JpaRepository<IndexData, Long>, IndexDataRepositoryCustom {
     // 같은 (indexInfo/Data) 가진 데이터의 존재여부 확인
@@ -29,5 +29,8 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>, Ind
         ORDER BY i.indexName ASC
     """)
     List<IndexData> findLatestIndexDataForFavorites();
+
+    // 대시 보드 조회용 추가
+    List<IndexData> findByIndexInfoIdAndBaseDateBetweenOrderByBaseDateAsc(Long indexInfoId, LocalDate startDate, LocalDate endDate);
 }
 
