@@ -18,6 +18,7 @@ import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.entity.SyncJob;
 import com.sb10findexteam6.mapper.IndexInfoMapper;
 import com.sb10findexteam6.mapper.PagingMapper;
+import com.sb10findexteam6.mapper.SyncJobMapper;
 import com.sb10findexteam6.repository.AutoSyncConfigRepository;
 import com.sb10findexteam6.repository.IndexInfoRepository;
 import com.sb10findexteam6.repository.SyncJobRepository;
@@ -80,68 +81,85 @@ public class IndexInfoServiceImpl implements IndexInfoService{
   @Override
   @Transactional
   public List<SyncJobDto> syncFromOpenApi(String targetDate, String worker) {
-    FscIndexResponseDto response = openApiFetchService.fetchStockMarketIndex(targetDate, 100, 1);
+    final int pageSize = 100;
+    int pageNo = 1;
 
     List<SyncJobDto> result = new ArrayList<>();
-    for (FscIndexResponseDto.Item item : response.response().body().items().item()) {
 
-      try {
-        Optional<IndexInfo> existing = indexInfoRepository
-            .findByIndexClassificationAndIndexName(item.idxCsf(), item.idxNm());
+    while (true) {
+      FscIndexResponseDto response =
+              openApiFetchService.fetchStockMarketIndex(targetDate, pageSize, pageNo);
 
-        if (existing.isPresent()) {
-          existing.get().update(
-              Integer.parseInt(item.epyItmsCnt()),
-              LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
-              new BigDecimal(item.basIdx()),
-              existing.get().isFavorite()
-          );
-          SyncJob syncJob = new SyncJob(
-              existing.get(), JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
-          );
-          syncJobRepository.save(syncJob);
-          result.add(new SyncJobDto(
-              syncJob.getId(),
-              syncJob.getJobType(),
-              syncJob.getIndexInfo().getId(),
-              syncJob.getTargetDate(),
-              syncJob.getWorker(),
-              syncJob.getJobTime(),
-              syncJob.getResult()
-          ));
-        } else {
-          IndexInfo indexInfo = new IndexInfo(
-              item.idxCsf(),
-              item.idxNm(),
-              Integer.parseInt(item.epyItmsCnt()),
-              LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
-              new BigDecimal(item.basIdx()),
-              SourceType.OPEN_API,
-              false
-          );
-          indexInfoRepository.save(indexInfo);
-          autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
-          SyncJob syncJob = new SyncJob(
-              indexInfo, JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
-          );
-          syncJobRepository.save(syncJob);
-          result.add(new SyncJobDto(
-              syncJob.getId(),
-              syncJob.getJobType(),
-              syncJob.getIndexInfo().getId(),
-              syncJob.getTargetDate(),
-              syncJob.getWorker(),
-              syncJob.getJobTime(),
-              syncJob.getResult()
-          ));
-        }
-      } catch (Exception e) {
-        log.error("[지수 정보 자동 연동(수정) 실패]");
+      if (response == null
+              || response.response() == null
+              || response.response().body() == null
+              || response.response().body().items() == null
+              || response.response().body().items().item() == null
+              || response.response().body().items().item().isEmpty()) {
+        break;
       }
+
+      List<FscIndexResponseDto.Item> items = response.response().body().items().item();
+      processIndexInfoItems(items, worker, result);
+
+      int totalCount = response.response().body().totalCount();
+      int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+      if (pageNo >= totalPages) {
+        break;
+      }
+
+      pageNo++;
     }
+
     return result;
   }
 
+  private void processIndexInfoItems(List<FscIndexResponseDto.Item> items, String worker, List<SyncJobDto> result) {
+    for (FscIndexResponseDto.Item item : items) {
+      try {
+        Optional<IndexInfo> existing = indexInfoRepository
+                .findByIndexClassificationAndIndexName(item.idxCsf(), item.idxNm());
+
+        if (existing.isPresent()) {
+          existing.get().update(
+                  Integer.parseInt(item.epyItmsCnt()),
+                  LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
+                  new BigDecimal(item.basIdx()),
+                  existing.get().isFavorite()
+          );
+
+          SyncJob syncJob = new SyncJob(
+                  existing.get(), JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
+          );
+          syncJobRepository.save(syncJob);
+
+          result.add(SyncJobMapper.toDto(syncJob));;
+        } else {
+          IndexInfo indexInfo = new IndexInfo(
+                  item.idxCsf(),
+                  item.idxNm(),
+                  Integer.parseInt(item.epyItmsCnt()),
+                  LocalDate.parse(item.basPntm(), DateTimeFormatter.ofPattern("yyyyMMdd")),
+                  new BigDecimal(item.basIdx()),
+                  SourceType.OPEN_API,
+                  false
+          );
+          indexInfoRepository.save(indexInfo);
+          autoSyncConfigRepository.save(new AutoSyncConfig(indexInfo));
+
+          SyncJob syncJob = new SyncJob(
+                  indexInfo, JobType.INDEX_INFO, null, worker, LocalDateTime.now(), Result.SUCCESS
+          );
+          syncJobRepository.save(syncJob);
+
+          result.add(SyncJobMapper.toDto(syncJob));;
+        }
+      } catch (Exception e) {
+        log.error("[지수 정보 연동 실패] idxCsf={}, idxNm={}", item.idxCsf(), item.idxNm(), e);
+      }
+    }
+  }
 
   @Override
   @Transactional
@@ -242,3 +260,4 @@ public class IndexInfoServiceImpl implements IndexInfoService{
         .toList();
   }
 }
+
