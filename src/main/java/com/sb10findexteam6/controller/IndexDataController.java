@@ -38,7 +38,7 @@ public class IndexDataController {
     return indexDataService.update(id, request);
   }
 
-  @Operation(summary = ".지수 데이터 삭제")
+  @Operation(summary = "지수 데이터 삭제")
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Long id) {
@@ -76,13 +76,7 @@ public class IndexDataController {
 
     return indexDataService.getAll(condition);
   }
-  // 지수 차트 조회
-  // 지수 성과 랭킹 조회
-  // 관심 지수 성과 조회
 
-  // CSV 파일 Export
-  @GetMapping(value = "/export/csv")
-  // CSV 파일 Export\
   @Operation(summary = "지수 데이터 CSV export")
   @GetMapping(value = "/export/csv")
   public ResponseEntity<byte[]> export(
