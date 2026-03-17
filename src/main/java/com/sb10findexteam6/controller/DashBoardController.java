@@ -27,8 +27,10 @@ public class DashBoardController {
      */
     @Operation(summary = "관심 지수 성과 조회")
     @GetMapping("/api/index-data/performance/favorite")
-    public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexesPerformance() {
-        List<IndexPerformanceDto> result = dashBoardService.getFavoriteIndexesPerformance();
+    public ResponseEntity<List<IndexPerformanceDto>> getFavoriteIndexesPerformance(
+            @RequestParam(defaultValue = "DAILY") PeriodType periodType
+    ) {
+        List<IndexPerformanceDto> result = dashBoardService.getFavoriteIndexesPerformance(periodType);
         return ResponseEntity.ok(result);
     }
 

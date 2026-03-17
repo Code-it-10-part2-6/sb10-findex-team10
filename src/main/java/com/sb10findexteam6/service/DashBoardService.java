@@ -33,18 +33,50 @@ public class DashBoardService {
     /**
      * 대시보드 - 주요 지수 현황 요약 (즐겨찾기 지수)
      */
-    public List<IndexPerformanceDto> getFavoriteIndexesPerformance() {
-        // 즐겨찾기 된 지수의 최신 IndexData 목록을 가져옴
+    public List<IndexPerformanceDto> getFavoriteIndexesPerformance(PeriodType periodType) {
         List<IndexData> latestDataList = indexDataRepository.findLatestIndexDataForFavorites();
 
-        return latestDataList.stream().map(indexData -> {
-                IndexInfo indexInfo = indexData.getIndexInfo();
+        return latestDataList.stream()
+                .map(latestData -> {
+                    IndexInfo indexInfo = latestData.getIndexInfo();
+                    // 기준일 비교 계산 DAILY/WEEKLY/MONTHLY.getComparisonDate
+                    LocalDate comparisonDate = periodType.getComparisonDate(latestData.getBaseDate());
+                    // 비교 기준일에서 제일 가까운 날짜의 데이터 가져오기
+                    IndexData previousData = indexDataRepository
+                            .findTopByIndexInfoIdAndBaseDateLessThanEqualOrderByBaseDateDesc(
+                                    indexInfo.getId(),
+                                    comparisonDate
+                            )
+                            .orElse(null);
 
-                BigDecimal beforePrice = indexData.getClosingPrice().subtract(indexData.getVersus());
+                    if (previousData == null) {
+                        return null;
+                    }
+                    // 종가 기준 비교 위해
+                    BigDecimal currentPrice = latestData.getClosingPrice();
+                    BigDecimal beforePrice = previousData.getClosingPrice();
 
-                return dashBoardMapper.toIndexPerformanceDto(indexInfo, indexData, beforePrice);
-            })
-            .toList();
+                    if (beforePrice == null || BigDecimal.ZERO.compareTo(beforePrice) == 0) {
+                        return null;
+                    }
+                    // 등락폭 계산
+                    BigDecimal versus = currentPrice.subtract(beforePrice);
+                    BigDecimal fluctuationRate = versus
+                            .divide(beforePrice, 3, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100));
+
+                    return new IndexPerformanceDto(
+                            indexInfo.getId(),
+                            indexInfo.getIndexClassification(),
+                            indexInfo.getIndexName(),
+                            versus,
+                            fluctuationRate,
+                            currentPrice,
+                            beforePrice
+                    );
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
   public IndexChartDto getChartIndex(Long id, PeriodType periodType) {
