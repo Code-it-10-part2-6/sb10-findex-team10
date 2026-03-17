@@ -1,11 +1,18 @@
 package com.sb10findexteam6.service;
 
+import com.sb10findexteam6.common.enums.JobType;
 import com.sb10findexteam6.common.enums.Result;
+import com.sb10findexteam6.common.enums.SourceType;
+import com.sb10findexteam6.common.exception.BusinessException;
+import com.sb10findexteam6.common.exception.ErrorCode;
+import com.sb10findexteam6.dto.openapi.FscIndexResponseDto;
 import com.sb10findexteam6.dto.syncJob.CursorPageResponseSyncJobDto;
 import com.sb10findexteam6.dto.syncJob.IndexDataSyncRequest;
 import com.sb10findexteam6.dto.syncJob.SyncJobDto;
 import com.sb10findexteam6.dto.syncJob.SyncJobSearchCondition;
 import com.sb10findexteam6.dto.syncJob.SyncJobSummaryDto;
+import com.sb10findexteam6.entity.IndexData;
+import com.sb10findexteam6.entity.IndexInfo;
 import com.sb10findexteam6.entity.SyncJob;
 import com.sb10findexteam6.mapper.SyncJobMapper;
 import com.sb10findexteam6.repository.IndexInfoRepository;
@@ -25,7 +32,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -40,10 +52,12 @@ public class SyncJobServiceImpl implements SyncJobService {
 
     private static final int DEFAULT_SIZE = 10;
     private static final String DEFAULT_SORT_FIELD = "jobTime";
-    private static final String DEFAULT_SORT_DIRECTION = "desc";
+    private static final int OPEN_API_NUM_OF_ROWS = 1000;
 
     private final SyncJobRepository syncJobRepository;
     private final IndexInfoRepository indexInfoRepository;
+    private final IndexDataRepository indexDataRepository;
+    private final OpenApiFetchService openApiFetchService;
     private final OpenApiSyncService openApiSyncService;
     private final SyncDataPersistenceService syncDataPersistenceService;
 
@@ -116,7 +130,7 @@ public class SyncJobServiceImpl implements SyncJobService {
 
     @Override
     public List<SyncJobDto> syncIndexInfos(String worker) {
-        throw new UnsupportedOperationException("지수 정보 연동은 아직 미구현.");
+        throw new UnsupportedOperationException("지수 정보 연동은 아직 미구현입니다.");
     }
 
     // 지수 데이터 연동 작업
