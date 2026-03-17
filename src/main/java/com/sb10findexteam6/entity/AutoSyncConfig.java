@@ -11,16 +11,18 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "auto_sync_config")
 @Getter
-@NoArgsConstructor
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class AutoSyncConfig extends BaseEntity {
 
   @Column(name = "enabled", nullable = false)
-  private boolean enabled;
+  private Boolean enabled;
 
   @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
   @JoinColumn(name = "index_info_id", nullable = false, unique = true)
