@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/index-datas")
+@RequestMapping("/api/index-data")
 @RequiredArgsConstructor
 public class IndexDataController {
   private final IndexDataService indexDataService;

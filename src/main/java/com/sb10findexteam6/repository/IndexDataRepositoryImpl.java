@@ -90,7 +90,7 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
 
     IndexDataSortField sortField = resolveSortField(condition.getSortField());
     String sortDirection = resolveSortDirection(condition.getSortDirection());
-    String sortFieldPath = "d. " + sortField.getEntityField();
+    String sortFieldPath = "d." + sortField.getEntityField();
 
     jpql.append(" order by ")
             .append(sortFieldPath)
