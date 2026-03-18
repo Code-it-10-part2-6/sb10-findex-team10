@@ -59,3 +59,105 @@ Open API를 활용하여 지수 정보와 지수 데이터를 연동하고, 이�
 ---
 
 ## 프로젝트 구조
+src
+├─ main
+│  ├─ java
+│  │  └─ com.sb10findexteam6
+│  │     ├─ common
+│  │     │  ├─ config
+│  │     │  ├─ exception
+│  │     │  ├─ entity
+│  │     │  └─ enums
+│  │     │
+│  │     ├─ controller
+│  │     │  ├─ IndexDataController.java
+│  │     │  ├─ DashBoardController.java
+│  │     │  ├─ IndexInfoController.java
+│  │     │  ├─AutoSyncConfigController.java
+│  │     │  └─ SyncJobController.java
+│  │     │
+│  │     ├─ dto
+│  │     │  ├─ dashboard
+│  │     │  │  ├─ IndexChartDto.java
+│  │     │  │  ├─ IndexPerformanceDto.java
+│  │     │  │  ├─ RankedIndexPerformanceDto.java
+│  │     │  │  ├─ ChartDataPoint.java
+│  │     │  │  ├─ PeriodType.java
+│  │     │  │  └─ PerformancePeriodType.java
+│  │     │  ├─ autosyncconfig
+│  │     │  │  ├─ AutoSyncConfigDto.java
+│  │     │  │  ├─ AutoSyncConfigSearchCondition.java
+│  │     │  │  └─ AutoSyncConfigUpdateRequest.java
+│  │     │  ├─ indexdata
+│  │     │  │  ├─ IndexDataCreateRequest.java
+│  │     │  │  ├─ IndexDataDto.java
+│  │     │  │  ├─ IndexDataSearchCondition.java
+│  │     │  │  ├─ IndexDataSortField.java
+│  │     │  │  └─ IndexDataUpdateRequest.java
+│  │     │  ├─ indexinfo
+│  │     │  │  ├─ IndexInfoCreateRequest.java
+│  │     │  │  ├─ IndexInfoDto.java
+│  │     │  │  ├─ IndexInfoSearchCondition.java
+│  │     │  │  ├─ IndexInfoSummaryDto.java
+│  │     │  │  └─ IndexInfoUpdateRequest.java
+│  │     │  ├─ openapi
+│  │     │  │  ├─ FcsIndexReponseDto.java
+│  │     │  │  └─ OpenApiIndexDataSyncResultDto.java
+│  │     │  ├─ syncjob
+│  │     │  │  ├─ CursorPageResponseSyncJobDto.java
+│  │     │  │  ├─ IndexDataSyncRequest.java
+│  │     │  │  ├─ SyncJobDto.java
+│  │     │  │  ├─ SyncJobSearchCondition.java
+│  │     │  │  └─ SyncJobSummaryDto.java
+│  │     │  ├─ CursorPageResponse
+│  │     │  └─ CursorPageResponseIndexInfoDto
+│  │     │
+│  │     ├─ entity
+│  │     │  ├─ IndexInfo.java
+│  │     │  ├─ IndexData.java
+│  │     │  ├─ SyncJob.java
+│  │     │  └─ AutoSyncConfig.java
+│  │     │
+│  │     ├─ mapper
+│  │     │  ├─ AutoSyncConfigMapper.java
+│  │     │  ├─ IndexInfoMapper.java
+│  │     │  ├─ DashBoardMapper.java
+│  │     │  ├─ OpenApiDataMapper.java
+│  │     │  ├─ PagingMapper.java
+│  │     │  └─ SyncJobMapper.java
+│  │     │
+│  │     ├─ repository
+│  │     │  ├─ IndexInfoRepository.java
+│  │     │  ├─ IndexDataRepository.java
+│  │     │  ├─ IndexDataRepositoryCustom.java
+│  │     │  ├─ IndexDataRepositoryImpl.java
+│  │     │  ├─ SyncJobRepository.java
+│  │     │  └─ AutoSyncConfigRepository.java
+│  │     │
+│  │     ├─ scheduler
+│  │     │  └─ FscIndexScheduler.java
+│  │     │
+│  │     ├─ service
+│  │     │  ├─ IndexDataService.java
+│  │     │  ├─ IndexDataServiceImpl.java
+│  │     │  ├─ DashBoardService.java
+│  │     │  ├─ SyncJobService.java
+│  │     │  └─ openapi
+│  │     │     ├─ OpenApiFetchService.java
+│  │     │     ├─ OpenApiSyncService.java
+│  │     │     ├─ SyncTargetService.java
+│  │     │     ├─ SyncDataPersistenceService.java
+│  │     │     └─ OpenApiParseUtils.java
+│  │     │
+│  │     ├─ utils
+│  │     │  └─ IndexDataService.java
+│  │     │
+│  │     └─ Sb10FindexTeam6Application.java
+│  │
+│  └─ resources
+│     ├─ application.yml
+│     └─ data.sql
+│
+└─ test
+   └─ java
+      └─ com.sb10findexteam6
