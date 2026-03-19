@@ -26,15 +26,18 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
   @Override
   public List<IndexData> search(IndexDataSearchCondition condition) {
     StringBuilder jpql = new StringBuilder("select d from IndexData d where 1=1");
-    Map<String, Object> params = new HashMap<>();
+    Map<String, Object> params = new HashMap<>(); //실제 값은 -> params.put("indexInfoId", 3L) 이런식으로 저장
 
-    appendWhereClause(jpql, params, condition);
+    appendWhereClause(jpql, params, condition); // where 조건절 붙이는
 
-    IndexDataSortField sortField = resolveSortField(condition.getSortField());
+    IndexDataSortField sortField = resolveSortField(condition.getSortField()); //sortField enum으로 변경
     String sortDirection = resolveSortDirection(condition.getSortDirection());
-    String sortFieldPath = "d." + sortField.getEntityField();
+    String sortFieldPath = "d." + sortField.getEntityField(); // 정렬에 사용할 필드 경로 만드는.. d.baseDate 처럼
 
+    // 커서 페이지네이션 조건 추가
     if (condition.getIdAfter() != null) {
+      // 단순히 id값만 아니아 현재 정렬 기준값도 알아야 예를 들어 id=100인 데이터의 closingPrice 가 얼마인지
+      //알아야 그 다음 데이터부터 이어서 조회할 수 있기 때문
       IndexData cursorEntity = em.find(IndexData.class, condition.getIdAfter());
 
       if (cursorEntity == null) {
@@ -43,9 +46,9 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
                 "존재하지 않는 페이지네이션 기준 id입니다. idAfter= " + condition.getIdAfter()
         );
       }
-
+      // 정렬 기준값 추출
       Object cursorValue = extractSortValue(cursorEntity, sortField);
-
+      // 내림차 순일때 다음페이지는 현재 커서값보다 더 작은 값 of 같다면 id가 더 작은 값으로 정렬
       if ("desc".equals(sortDirection)) {
         jpql.append(" and (")
                 .append(sortFieldPath)
@@ -68,12 +71,14 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
             .append(sortFieldPath)
             .append(" ")
             .append(sortDirection)
+            // id도 정렬 기준에 추가하는 이유는 값이 같은 데이터들도 처리해줘야하기 떄문
             .append(", d.id ")
             .append(sortDirection);
 
+    // 쿼리 객체 생성 및 파라미터 바인딩 -> query.setParameter("indexInfoId", 1L);
     TypedQuery<IndexData> query = em.createQuery(jpql.toString(), IndexData.class);
     params.forEach(query::setParameter);
-
+    // 조회 개수 설정 그리고 다음 페이지가 있는지 확인위해 1개만 더 조회.
     int size = condition.getSize() != null ? condition.getSize() : 10;
     query.setMaxResults(size + 1);
 
@@ -138,7 +143,7 @@ public class IndexDataRepositoryImpl implements IndexDataRepositoryCustom {
       params.put("endDate", condition.getEndDate());
     }
   }
-
+// 정렬기준 default 값은 sortField로 고정
   private IndexDataSortField resolveSortField(String sortField) {
     if (sortField == null || sortField.isBlank()) {
       return IndexDataSortField.BASE_DATE;

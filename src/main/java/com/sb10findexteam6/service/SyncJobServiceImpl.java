@@ -139,18 +139,20 @@ public class SyncJobServiceImpl implements SyncJobService {
         validateIndexDataSyncRequest(request);
 
         String resolvedWorker = resolveWorker(worker);
-
+        // 지수정보 목록 가져옴. -> [1,2,3] 요청
         List<IndexInfo> targetIndexes = resolveTargetIndexes(request.indexInfoIds());
+        // 결과 저장용 리스트
         List<SyncJobDto> result = new ArrayList<>();
-
+        // 동기화 시작 날짜
         LocalDate targetDate = request.baseDateFrom();
 
         while (!targetDate.isAfter(request.baseDateTo())) {
             for (IndexInfo indexInfo : targetIndexes) {
                 try {
+                    // 실제 openApi 데이터 조회
                     Optional<IndexData> fetchedDataOpt =
                             openApiSyncService.fetchOneDayIndexData(indexInfo, targetDate);
-
+                    // 데이터가 존재하면 -> 저장 + 성공 기록!
                     if (fetchedDataOpt.isPresent()) {
                         syncDataPersistenceService.saveOneDayDataAndSuccessJob(
                                 indexInfo,
@@ -159,13 +161,14 @@ public class SyncJobServiceImpl implements SyncJobService {
                                 resolvedWorker
                         );
                     } else {
+                        // 휴장일이나 응답 없음 등 여러가지 경우가 존재하므로 실패아닌 정상 종료로 처리
                         syncDataPersistenceService.saveOneDaySuccessWithoutData(
                                 indexInfo,
                                 targetDate,
                                 resolvedWorker
                         );
                     }
-
+                    // 방금 저장된 최신 SyncJob 중 한 건 조회!! (최신)
                     SyncJobDto latestDto = syncJobRepository.findAll(
                                     PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "jobTime"))
                             ).getContent().stream()
@@ -184,7 +187,7 @@ public class SyncJobServiceImpl implements SyncJobService {
                             resolvedWorker,
                             e.getMessage()
                     );
-
+                    // 실패 후에도 최신 SyncJob 기록 result에 추가
                     SyncJobDto latestDto = syncJobRepository.findAll(
                                     PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "jobTime"))
                             ).getContent().stream()
@@ -197,6 +200,7 @@ public class SyncJobServiceImpl implements SyncJobService {
                     }
                 }
             }
+            // 다음 날짜로 이동 시켜 while문 반복! 종료일까지
             targetDate = targetDate.plusDays(1);
         }
 
